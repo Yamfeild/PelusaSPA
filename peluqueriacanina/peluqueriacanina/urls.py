@@ -19,6 +19,8 @@ from django.urls import path, include
 from rest_framework import routers
 from citascaninas.views import UserViewSet
 from citascaninas.views import DuenoViewSet, PeluqueroViewSet, MascotaViewSet, TarifaViewSet, CitaViewSet
+from citascaninas.authentication import RegisterView, CustomTokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView
 
 # Crear el router y registrar los endpoints
 router = routers.DefaultRouter()
@@ -33,4 +35,7 @@ router.register(r'citas', CitaViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),  # Incluye todos los endpoints de la app
+    path('api/auth/register/', RegisterView.as_view(), name='auth_register'),
+    path('api/auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
