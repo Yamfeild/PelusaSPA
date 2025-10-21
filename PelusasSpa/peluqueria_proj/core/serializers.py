@@ -82,6 +82,7 @@ class PeluqueroSerializer(serializers.ModelSerializer):
 
 
 class MascotaSerializer(serializers.ModelSerializer):
+    cliente = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Mascota
         fields = ['id', 'nombre', 'edad', 'raza', 'cliente']
