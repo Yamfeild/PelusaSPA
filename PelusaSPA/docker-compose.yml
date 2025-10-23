@@ -33,7 +33,7 @@ services:
     container_name: kong_gateway
     ports:
       - "8080:8000"   # puerto público
-      - "8001:8001"   # admin API (opcional)
+      - "8443:8001"   # admin API (cambiado para evitar conflicto)
     volumes:
       - ./kong.yml:/usr/local/kong/declarative/kong.yml
     environment:

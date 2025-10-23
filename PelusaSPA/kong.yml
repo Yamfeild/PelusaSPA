@@ -6,15 +6,18 @@ services:
     routes:
       - name: usuario_route
         paths: ["/api/usuarios"]
+        strip_path: false
 
   - name: cliente_service
     url: http://cliente_service:8002
     routes:
       - name: cliente_route
         paths: ["/api/clientes"]
+        strip_path: false
 
   - name: citas_service
     url: http://citas_service:8003
     routes:
       - name: citas_route
         paths: ["/api/citas"]
+        strip_path: false
