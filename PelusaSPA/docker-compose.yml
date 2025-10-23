@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  usuario_service:
+    build: ./usuario_service
+    container_name: usuario_service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./usuario_service:/app
+    command: python manage.py runserver 0.0.0.0:8001
+
+  cliente_service:
+    build: ./cliente_service
+    container_name: cliente_service
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./cliente_service:/app
+    command: python manage.py runserver 0.0.0.0:8002
+
+  citas_service:
+    build: ./citas_service
+    container_name: citas_service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./citas_service:/app
+    command: python manage.py runserver 0.0.0.0:8003
+
+  kong:
+    image: kong:3.5
+    container_name: kong_gateway
+    ports:
+      - "8080:8000"   # puerto público
+      - "8001:8001"   # admin API (opcional)
+    volumes:
+      - ./kong.yml:/usr/local/kong/declarative/kong.yml
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: "/usr/local/kong/declarative/kong.yml"
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr

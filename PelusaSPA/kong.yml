@@ -1,0 +1,20 @@
+_format_version: "3.0"
+
+services:
+  - name: usuario_service
+    url: http://usuario_service:8001
+    routes:
+      - name: usuario_route
+        paths: ["/api/usuarios"]
+
+  - name: cliente_service
+    url: http://cliente_service:8002
+    routes:
+      - name: cliente_route
+        paths: ["/api/clientes"]
+
+  - name: citas_service
+    url: http://citas_service:8003
+    routes:
+      - name: citas_route
+        paths: ["/api/citas"]

@@ -1,0 +1,13 @@
+# Framework principal
+Django==5.0.2
+djangorestframework==3.15.1
+
+# CORS para permitir peticiones entre servicios
+django-cors-headers==4.3.1
+
+# Autenticación con JWT (JSON Web Tokens)
+djangorestframework-simplejwt==5.3.1
+
+# Dependencias opcionales pero recomendadas
+PyJWT==2.9.0
+requests==2.32.3
