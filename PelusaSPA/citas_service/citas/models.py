@@ -7,14 +7,19 @@ class EstadoCita(models.TextChoices):
     PENDIENTE = 'PENDIENTE', 'Pendiente'
     CONFIRMADA = 'CONFIRMADA', 'Confirmada'
     CANCELADA = 'CANCELADA', 'Cancelada'
+    FINALIZADA = 'FINALIZADA', 'Finalizada'
 
 
 class Mascota(models.Model):
     """
     Mascota de un cliente.
     El cliente registra sus mascotas y luego agenda citas para ellas.
+    Relación con el CLIENTE (usuario_service):
+    - No usamos ForeignKey directa porque el cliente vive en otro microservicio.
+    - Guardamos el identificador entero "dueno_id" que corresponde al ID del User con rol CLIENTE.
+    - Esto permite validar pertenencia y filtrar citas/mascotas sin acoplar bases de datos.
     """
-    dueno_id = models.IntegerField(help_text="ID del cliente dueño desde usuario_service")
+    dueno_id = models.IntegerField(help_text="ID del cliente (User) dueño desde usuario_service. Se almacena como entero para mantener microservicios desacoplados.")
     nombre = models.CharField(max_length=100)
     raza = models.CharField(max_length=100)
     edad = models.IntegerField(help_text="Edad en años")
@@ -90,7 +95,10 @@ class Cita(models.Model):
     
     @property
     def cliente_id(self):
-        """Propiedad para mantener compatibilidad con código existente."""
+        """Retorna el ID del cliente asociado a la mascota.
+        Nota: cliente_id no es un campo físico; deriva de Mascota.dueno_id.
+        Esto evita una ForeignKey cruzada entre microservicios y mantiene el modelo simple.
+        """
         return self.mascota.dueno_id if self.mascota else None
     
     def clean(self):
@@ -130,5 +138,22 @@ class Cita(models.Model):
         if self.estado == EstadoCita.CANCELADA:
             raise ValidationError("No se puede confirmar una cita cancelada")
         self.estado = EstadoCita.CONFIRMADA
+        self.save(update_fields=['estado', 'actualizada_en'])
+
+    def finalizar(self):
+        """Finaliza la cita (cuando ya ocurrió)."""
+        if self.estado == EstadoCita.CANCELADA:
+            raise ValidationError("No se puede finalizar una cita cancelada")
+        if self.estado == EstadoCita.FINALIZADA:
+            raise ValidationError("La cita ya está finalizada")
+        # Solo se puede finalizar si está confirmada o pendiente y ya pasó su hora_fin
+        from django.utils import timezone
+        ahora = timezone.now()
+        fecha_hora_fin = datetime.combine(self.fecha, self.hora_fin)
+        if fecha_hora_fin > ahora:
+            raise ValidationError("La cita aún no ha concluido, no se puede finalizar")
+        if self.estado not in [EstadoCita.CONFIRMADA, EstadoCita.PENDIENTE]:
+            raise ValidationError("Estado inválido para finalizar")
+        self.estado = EstadoCita.FINALIZADA
         self.save(update_fields=['estado', 'actualizada_en'])
 

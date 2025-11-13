@@ -79,9 +79,8 @@ docker-compose down -v
 **Usuarios:**
 - GET `http://localhost:8000/api/usuarios/{id}/` - Ver usuario
 - GET `http://localhost:8000/api/usuarios/me/` - Mi perfil
-- GET `http://localhost:8000/api/usuarios/?rol=PELUQUERO` - Listar peluqueros
-- GET `http://localhost:8000/api/usuarios/peluqueros/` - Listar peluqueros (atajo)
-
+ - GET `http://localhost:8000/api/usuarios/?rol=PELUQUERO` - Listar peluqueros
+ - GET `http://localhost:8000/api/usuarios/peluqueros/` - Listar peluqueros (atajo)
 **Mascotas:**
 - GET `http://localhost:8000/api/mascotas/` - Listar mis mascotas
 - POST `http://localhost:8000/api/mascotas/` - Registrar mascota
@@ -95,8 +94,14 @@ docker-compose down -v
 - GET `http://localhost:8000/api/citas/{id}/` - Ver detalle
 - POST `http://localhost:8000/api/citas/{id}/cancelar/` - Cancelar
 - POST `http://localhost:8000/api/citas/{id}/confirmar/` - Confirmar
+- POST `http://localhost:8000/api/citas/{id}/finalizar/` - Finalizar manual (peluquero) si ya ocurrió
+ - GET `http://localhost:8000/api/citas/dia/?fecha=YYYY-MM-DD` - Listar citas del día (solo peluquero autenticado)
+- POST `http://localhost:8000/api/citas/{id}/cambiar_estado/` - Cambiar estado (peluquero) body `{"estado": "CONFIRMADA|CANCELADA|FINALIZADA"}`
 - GET `http://localhost:8000/api/citas/mis_citas/` - Mis citas
 - GET `http://localhost:8000/api/citas/disponibilidad/` - Consultar disponibilidad
+
+Estados posibles: `PENDIENTE`, `CONFIRMADA`, `CANCELADA`, `FINALIZADA`.
+Nota: Las citas se auto-marcan como `FINALIZADA` cuando su `hora_fin` ya pasó (o el día terminó), en los listados.
 
 **Horarios:**
 - GET `http://localhost:8000/api/horarios/` - Listar horarios
@@ -283,6 +288,20 @@ curl -X GET http://localhost:8000/api/citas/ `
 # (Opcional) Mis citas, también funciona para CLIENTE/PELUQUERO
 curl -X GET http://localhost:8000/api/citas/mis_citas/ `
   -H "Authorization: Bearer TOKEN"
+
+# Listar citas del día para el peluquero (formato fecha YYYY-MM-DD)
+curl -X GET "http://localhost:8000/api/citas/dia/?fecha=2025-11-18" `
+  -H "Authorization: Bearer TOKEN_PELUQUERO"
+
+# Cambiar estado de una cita (peluquero asignado)
+curl -X POST http://localhost:8000/api/citas/1/cambiar_estado/ `
+  -H "Authorization: Bearer TOKEN_PELUQUERO" `
+  -H "Content-Type: application/json" `
+  -d '{"estado": "CONFIRMADA"}'
+
+# Finalizar manualmente (si ya pasó hora_fin)
+curl -X POST http://localhost:8000/api/citas/1/finalizar/ `
+  -H "Authorization: Bearer TOKEN_PELUQUERO"
 ```
 
 ## 📊 Monitoreo

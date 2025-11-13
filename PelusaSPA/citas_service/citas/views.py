@@ -142,7 +142,33 @@ class CitaViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
     
     def get_queryset(self):
-        """Filtrar citas según el rol del usuario."""
+        """Filtrar citas según el rol del usuario y auto-finalizar vencidas.
+
+        Reglas de auto-finalización:
+        - Si la fecha es anterior a hoy y estado en PENDIENTE/CONFIRMADA => FINALIZADA
+        - Si la fecha es hoy y hora_fin < ahora y estado en PENDIENTE/CONFIRMADA => FINALIZADA
+        Nota: Esto se ejecuta en cada listado para mantener consistencia sin tarea programada.
+        """
+        from django.utils import timezone
+        now = timezone.localtime()
+
+        # Citas vencidas por fecha pasada
+        vencidas_fecha = Cita.objects.filter(
+            estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA],
+            fecha__lt=now.date()
+        )
+
+        # Citas de hoy que ya terminaron
+        vencidas_hoy = Cita.objects.filter(
+            estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA],
+            fecha=now.date(),
+            hora_fin__lt=now.time()
+        )
+
+        # Bulk update si hay alguna
+        if vencidas_fecha.exists() or vencidas_hoy.exists():
+            (vencidas_fecha | vencidas_hoy).update(estado=EstadoCita.FINALIZADA, actualizada_en=now)
+
         queryset = Cita.objects.all().select_related('mascota').order_by('-fecha', '-hora_inicio')
         
         # Si es cliente, solo ve citas de sus mascotas
@@ -173,27 +199,18 @@ class CitaViewSet(viewsets.ModelViewSet):
         
         serializer.save()
     
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[IsPeluquero])
     def cancelar(self, request, pk=None):
-        """
-        Cancelar una cita.
-        - CLIENTE: puede cancelar citas de sus mascotas
-        - PELUQUERO: puede cancelar citas asignadas a él
+        """Cancelar una cita.
+        Solo el PELUQUERO asignado o un ADMIN (si se amplía verificación de rol) puede cancelar.
+        Cambio de regla: el cliente ya NO cancela directamente.
         """
         cita = self.get_object()
-        
-        # Validar permisos
-        if hasattr(request.user, 'rol'):
-            if request.user.rol == 'CLIENTE' and cita.mascota.dueno_id != request.user.id:
-                return Response(
-                    {"error": "No tienes permiso para cancelar esta cita"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            elif request.user.rol == 'PELUQUERO' and cita.peluquero_id != request.user.id:
-                return Response(
-                    {"error": "No tienes permiso para cancelar esta cita"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
+        if request.user.rol == 'PELUQUERO' and cita.peluquero_id != request.user.id:
+            return Response({"error": "No tienes permiso para cancelar esta cita"}, status=status.HTTP_403_FORBIDDEN)
+        # Admin override opcional
+        if request.user.rol == 'ADMIN':
+            pass
         
         # Cancelar
         try:
@@ -212,7 +229,7 @@ class CitaViewSet(viewsets.ModelViewSet):
     def confirmar(self, request, pk=None):
         """
         Confirmar una cita.
-        Solo PELUQUERO puede confirmar citas asignadas a él.
+        Solo el PELUQUERO asignado puede confirmar (cliente no modifica estados).
         """
         cita = self.get_object()
         
@@ -235,6 +252,65 @@ class CitaViewSet(viewsets.ModelViewSet):
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    @action(detail=True, methods=['post'], permission_classes=[IsPeluquero])
+    def finalizar(self, request, pk=None):
+        """Finalizar manualmente una cita (peluquero asignado). Normalmente se auto-finaliza cuando pasa hora_fin."""
+        cita = self.get_object()
+        if cita.peluquero_id != request.user.id:
+            return Response({"error": "No tienes permiso para finalizar esta cita"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            cita.finalizar()
+            return Response({"message": "Cita finalizada exitosamente"}, status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsPeluquero], url_path='dia')
+    def citas_del_dia(self, request):
+        """Listar todas las citas del peluquero autenticado para una fecha concreta.
+        Uso: GET /api/citas/dia/?fecha=YYYY-MM-DD
+        """
+        fecha = request.query_params.get('fecha')
+        if not fecha:
+            return Response({"error": "Debe proporcionar el parámetro fecha=YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            from datetime import datetime
+            fecha_obj = datetime.strptime(fecha, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({"error": "Formato de fecha inválido (usar YYYY-MM-DD)"}, status=status.HTTP_400_BAD_REQUEST)
+
+        citas = Cita.objects.filter(peluquero_id=request.user.id, fecha=fecha_obj).select_related('mascota').order_by('hora_inicio')
+        serializer = self.get_serializer(citas, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsPeluquero], url_path='cambiar_estado')
+    def cambiar_estado(self, request, pk=None):
+        """Cambiar estado de la cita (peluquero asignado).
+        Body: {"estado": "CONFIRMADA"|"CANCELADA"|"FINALIZADA"}
+        - FINALIZADA sólo si ya pasó hora_fin (o estaba pendiente/confirmada y vencida)
+        - CONFIRMADA desde PENDIENTE
+        - CANCELADA desde PENDIENTE/CONFIRMADA
+        """
+        cita = self.get_object()
+        if cita.peluquero_id != request.user.id:
+            return Response({"error": "No tienes permiso sobre esta cita"}, status=status.HTTP_403_FORBIDDEN)
+        estado_target = request.data.get('estado')
+        if estado_target not in ['CONFIRMADA', 'CANCELADA', 'FINALIZADA']:
+            return Response({"error": "Estado inválido"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            if estado_target == 'CONFIRMADA':
+                cita.confirmar()
+            elif estado_target == 'CANCELADA':
+                cita.cancelar()
+            elif estado_target == 'FINALIZADA':
+                cita.finalizar()
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(cita)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def mis_citas(self, request):

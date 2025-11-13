@@ -41,6 +41,9 @@ class HorarioSerializer(serializers.ModelSerializer):
 class CitaSerializer(serializers.ModelSerializer):
     """Serializer base para Cita."""
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    # cliente_id se expone como campo derivado: proviene de mascota.dueno_id.
+    # No existe relación directa con un modelo Cliente local porque ese usuario vive
+    # en el microservicio usuario_service. Así evitamos dependencias fuertes entre BDs.
     cliente_id = serializers.IntegerField(source='mascota.dueno_id', read_only=True)
     mascota_nombre = serializers.CharField(source='mascota.nombre', read_only=True)
     
@@ -112,6 +115,7 @@ class CitaCreateSerializer(serializers.ModelSerializer):
         hora_fin = attrs.get('hora_fin')
         fecha = attrs.get('fecha')
         peluquero_id = attrs.get('peluquero_id')
+        mascota = attrs.get('mascota')
         
         # Validar que hora_fin > hora_inicio
         if hora_inicio >= hora_fin:
@@ -172,6 +176,18 @@ class CitaCreateSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({
                         "hora_inicio": "El peluquero ya tiene una cita en ese horario"
                     })
+
+        # Regla: una misma mascota no puede tener más de una cita (pendiente o confirmada) en el mismo día
+        if fecha and mascota:
+            existe_cita_dia = Cita.objects.filter(
+                mascota=mascota,
+                fecha=fecha,
+                estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA]
+            ).exists()
+            if existe_cita_dia:
+                raise serializers.ValidationError({
+                    "fecha": "La mascota ya tiene una cita pendiente o confirmada para este día"
+                })
         
         return attrs
 
