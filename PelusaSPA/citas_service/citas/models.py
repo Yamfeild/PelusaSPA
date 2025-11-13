@@ -1,34 +1,134 @@
 from django.db import models
+from django.core.exceptions import ValidationError
+from datetime import datetime, time
+
 
 class EstadoCita(models.TextChoices):
-    REGISTRADA = 'REGISTRADA', 'Registrada'
+    PENDIENTE = 'PENDIENTE', 'Pendiente'
+    CONFIRMADA = 'CONFIRMADA', 'Confirmada'
     CANCELADA = 'CANCELADA', 'Cancelada'
-    TERMINADA = 'TERMINADA', 'Terminada'
 
 
-class TipoMascota(models.TextChoices):
-    PEQUEÑO = 'PEQUEÑO', 'Pequeño'
-    MEDIANO = 'MEDIANO', 'Mediano'
-    GRANDE = 'GRANDE', 'Grande'
-
-
-class Tarifa(models.Model):
-    tipoMascota = models.CharField(max_length=20, choices=TipoMascota.choices)
-    costo = models.DecimalField(max_digits=6, decimal_places=2)
-    descripcion = models.TextField(blank=True)
-
+class Mascota(models.Model):
+    """
+    Mascota de un cliente.
+    El cliente registra sus mascotas y luego agenda citas para ellas.
+    """
+    dueno_id = models.IntegerField(help_text="ID del cliente dueño desde usuario_service")
+    nombre = models.CharField(max_length=100)
+    raza = models.CharField(max_length=100)
+    edad = models.IntegerField(help_text="Edad en años")
+    creada_en = models.DateTimeField(auto_now_add=True)
+    actualizada_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Mascota"
+        verbose_name_plural = "Mascotas"
+        ordering = ['dueno_id', 'nombre']
+    
     def __str__(self):
-        return f"{self.tipoMascota} - ${self.costo}"
+        return f"{self.nombre} ({self.raza}) - Dueño: {self.dueno_id}"
+
+
+class Horario(models.Model):
+    """
+    Horario de disponibilidad de un peluquero.
+    Un peluquero puede tener múltiples horarios (días de la semana).
+    """
+    peluquero_id = models.IntegerField(help_text="ID del peluquero desde usuario_service")
+    dia = models.CharField(max_length=20, help_text="Día de la semana (ej: Lunes, Martes)")
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    activo = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = "Horario"
+        verbose_name_plural = "Horarios"
+        ordering = ['peluquero_id', 'dia', 'hora_inicio']
+    
+    def __str__(self):
+        return f"Peluquero {self.peluquero_id} - {self.dia}: {self.hora_inicio}-{self.hora_fin}"
+    
+    def clean(self):
+        """Validar que hora_fin sea mayor que hora_inicio."""
+        if self.hora_inicio >= self.hora_fin:
+            raise ValidationError("La hora de fin debe ser posterior a la hora de inicio")
+    
+    def es_dia_laboral(self, dia_nombre: str) -> bool:
+        """Verifica si el día corresponde a este horario."""
+        return self.dia.lower() == dia_nombre.lower() and self.activo
 
 
 class Cita(models.Model):
-    # IDs referenciados de los otros microservicios
-    mascota_id = models.IntegerField()      # ID de mascota desde cliente_service
-    peluquero_id = models.IntegerField()    # ID de peluquero desde usuario_service
+    """
+    Cita entre la mascota de un cliente y un peluquero.
+    Se valida contra la disponibilidad del Horario del peluquero.
+    """
+    mascota = models.ForeignKey(Mascota, on_delete=models.CASCADE, related_name='citas')
+    peluquero_id = models.IntegerField(help_text="ID del peluquero desde usuario_service")
     fecha = models.DateField()
-    hora = models.TimeField()
-    estado = models.CharField(max_length=20, choices=EstadoCita.choices, default=EstadoCita.REGISTRADA)
-    tarifa = models.ForeignKey(Tarifa, on_delete=models.SET_NULL, null=True, blank=True)
-
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    estado = models.CharField(
+        max_length=20, 
+        choices=EstadoCita.choices, 
+        default=EstadoCita.PENDIENTE
+    )
+    
+    # Campos adicionales opcionales
+    notas = models.TextField(blank=True, help_text="Notas o comentarios del cliente")
+    creada_en = models.DateTimeField(auto_now_add=True)
+    actualizada_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Cita"
+        verbose_name_plural = "Citas"
+        ordering = ['-fecha', '-hora_inicio']
+    
     def __str__(self):
-        return f"Cita: Mascota {self.mascota_id} con Peluquero {self.peluquero_id} - {self.fecha} {self.hora}"
+        return f"Cita #{self.id} - Mascota {self.mascota.nombre} con Peluquero {self.peluquero_id} el {self.fecha}"
+    
+    @property
+    def cliente_id(self):
+        """Propiedad para mantener compatibilidad con código existente."""
+        return self.mascota.dueno_id if self.mascota else None
+    
+    def clean(self):
+        """Validaciones de negocio."""
+        # Validar que hora_fin sea mayor que hora_inicio
+        if self.hora_inicio >= self.hora_fin:
+            raise ValidationError("La hora de fin debe ser posterior a la hora de inicio")
+        
+        # No permitir citas en fechas pasadas (solo al crear)
+        if not self.pk:  # Solo al crear
+            from django.utils import timezone
+            if self.fecha < timezone.now().date():
+                raise ValidationError("No se pueden crear citas en fechas pasadas")
+    
+    def agendar(self, mascota, peluquero_id: int, fecha, hora_inicio: time, hora_fin: time):
+        """Método para agendar una cita (usado desde serializer/view)."""
+        self.mascota = mascota
+        self.peluquero_id = peluquero_id
+        self.fecha = fecha
+        self.hora_inicio = hora_inicio
+        self.hora_fin = hora_fin
+        self.estado = EstadoCita.PENDIENTE
+        self.full_clean()
+        self.save()
+    
+    def cancelar(self):
+        """Cancela la cita."""
+        if self.estado == EstadoCita.CANCELADA:
+            raise ValidationError("La cita ya está cancelada")
+        self.estado = EstadoCita.CANCELADA
+        self.save(update_fields=['estado', 'actualizada_en'])
+    
+    def confirmar(self):
+        """Confirma la cita (solo peluquero)."""
+        if self.estado == EstadoCita.CONFIRMADA:
+            raise ValidationError("La cita ya está confirmada")
+        if self.estado == EstadoCita.CANCELADA:
+            raise ValidationError("No se puede confirmar una cita cancelada")
+        self.estado = EstadoCita.CONFIRMADA
+        self.save(update_fields=['estado', 'actualizada_en'])
+

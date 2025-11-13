@@ -1,6 +1,7 @@
 version: '3.9'
 
 services:
+  # Servicio de Usuarios - Puerto 8001
   usuario_service:
     build: ./usuario_service
     container_name: usuario_service
@@ -8,32 +9,60 @@ services:
       - "8001:8001"
     volumes:
       - ./usuario_service:/app
-    command: python manage.py runserver 0.0.0.0:8001
+      - usuario_db:/app/db_data
+    environment:
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - DATABASE_URL=sqlite:////app/db_data/db.sqlite3
+    networks:
+      - peluqueria_network
+    command: >
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  cliente_service:
-    build: ./cliente_service
-    container_name: cliente_service
-    ports:
-      - "8002:8002"
-    volumes:
-      - ./cliente_service:/app
-    command: python manage.py runserver 0.0.0.0:8002
-
+  # Servicio de Citas - Puerto 8002
   citas_service:
     build: ./citas_service
     container_name: citas_service
     ports:
-      - "8003:8003"
+      - "8002:8002"
     volumes:
       - ./citas_service:/app
-    command: python manage.py runserver 0.0.0.0:8003
+      - citas_db:/app/db_data
+    environment:
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - DATABASE_URL=sqlite:////app/db_data/db.sqlite3
+      - USUARIO_SERVICE_URL=http://usuario_service:8001
+    networks:
+      - peluqueria_network
+    depends_on:
+      - usuario_service
+    command: >
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8002"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # Kong API Gateway - Puerto 8000 (proxy) y 8443 (admin)
   kong:
     image: kong:3.5
     container_name: kong_gateway
     ports:
-      - "8080:8000"   # puerto público
-      - "8443:8001"   # admin API (cambiado para evitar conflicto)
+      - "8000:8000"   # Puerto público del gateway
+      - "8443:8001"   # Admin API
     volumes:
       - ./kong.yml:/usr/local/kong/declarative/kong.yml
     environment:
@@ -43,3 +72,17 @@ services:
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
+    networks:
+      - peluqueria_network
+    depends_on:
+      - usuario_service
+      - citas_service
+
+networks:
+  peluqueria_network:
+    driver: bridge
+
+volumes:
+  usuario_db:
+  citas_db:
+
