@@ -20,12 +20,33 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
+from drf_spectacular.utils import extend_schema
+
+@extend_schema(exclude=True)
+class HiddenTokenObtainPairView(TokenObtainPairView):
+    pass
+
+
+@extend_schema(exclude=True)
+class HiddenTokenRefreshView(TokenRefreshView):
+    pass
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('usuarios.urls')),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Endpoints JWT "puros" ocultos del esquema para evitar confusión
+    path('api/token/', HiddenTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', HiddenTokenRefreshView.as_view(), name='token_refresh'),
+    # OpenAPI schema y documentación
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
 ]
 

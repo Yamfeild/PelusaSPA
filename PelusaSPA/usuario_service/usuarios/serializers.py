@@ -201,21 +201,9 @@ class LoginSerializer(serializers.Serializer):
         return attrs
     
     def to_representation(self, instance):
-        """Devolver datos del usuario autenticado con tokens JWT."""
+        """Devolver solo datos básicos del usuario con tokens JWT."""
         user = self.validated_data['user']
         tokens = get_tokens_for_user(user)
-        
-        # Obtener datos del perfil
-        persona_data = None
-        perfil_especifico = None
-        
-        if hasattr(user, 'persona'):
-            persona_data = PersonaSerializer(user.persona).data
-            
-            if user.rol == User.Rol.CLIENTE and hasattr(user.persona, 'cliente'):
-                perfil_especifico = ClienteSerializer(user.persona.cliente).data
-            elif user.rol == User.Rol.PELUQUERO and hasattr(user.persona, 'peluquero'):
-                perfil_especifico = PeluqueroSerializer(user.persona.peluquero).data
         
         return {
             'user': {
@@ -224,8 +212,6 @@ class LoginSerializer(serializers.Serializer):
                 'email': user.email,
                 'rol': user.rol,
             },
-            'persona': persona_data,
-            'perfil': perfil_especifico,
             'tokens': tokens
         }
 
