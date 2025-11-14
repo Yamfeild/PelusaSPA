@@ -11,6 +11,7 @@ from .serializers import (
     ClienteSerializer,
     PeluqueroSerializer
 )
+from drf_spectacular.utils import extend_schema, OpenApiTypes
 
 
 class RegistroView(generics.CreateAPIView):
@@ -56,6 +57,14 @@ class LoginView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        summary="Login de usuarios",
+        description="Acepta username o email + contraseña. Devuelve tokens JWT y datos del usuario.",
+        request=LoginSerializer,
+        responses={200: OpenApiTypes.OBJECT},
+        tags=["auth"],
+        auth=[]  # importante: sin autenticación requerida para este endpoint
+    )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
