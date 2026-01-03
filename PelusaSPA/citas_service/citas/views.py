@@ -3,13 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.exceptions import ValidationError
-from .models import Cita, Horario, Mascota, EstadoCita
+from .models import Cita, Horario, Mascota, EstadoCita, Servicio
 from .serializers import (
     CitaSerializer,
     CitaCreateSerializer,
     CitaDetailSerializer,
     HorarioSerializer,
-    MascotaSerializer
+    MascotaSerializer,
+    ServicioSerializer
 )
 
 
@@ -37,6 +38,16 @@ class IsPeluquero(IsAuthenticated):
         if not super().has_permission(request, view):
             return False
         return hasattr(request.user, 'rol') and request.user.rol == 'PELUQUERO'
+
+
+class ServicioViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet para listar servicios.
+    Solo lectura, acceso público.
+    """
+    queryset = Servicio.objects.filter(activo=True)
+    serializer_class = ServicioSerializer
+    permission_classes = [AllowAny]
 
 
 class MascotaViewSet(viewsets.ModelViewSet):
@@ -246,6 +257,60 @@ class CitaViewSet(viewsets.ModelViewSet):
             return Response(
                 {"message": "Cita confirmada exitosamente"},
                 status=status.HTTP_200_OK
+            )
+        except ValidationError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reagendar(self, request, pk=None):
+        """
+        Reagendar una cita a una nueva fecha y hora.
+        El cliente puede reagendar sus propias citas.
+        """
+        cita = self.get_object()
+        
+        # Validar que sea el dueño de la mascota o admin
+        if request.user.rol == 'CLIENTE' and cita.mascota.dueno_id != request.user.id:
+            return Response(
+                {"error": "No tienes permiso para reagendar esta cita"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Validar que la cita esté en estado PENDIENTE
+        if cita.estado not in [EstadoCita.PENDIENTE]:
+            return Response(
+                {"error": "Solo se pueden reagendar citas en estado PENDIENTE"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Obtener nueva fecha y hora
+        fecha = request.data.get('fecha')
+        hora_inicio = request.data.get('hora_inicio')
+        hora_fin = request.data.get('hora_fin')
+        
+        if not fecha or not hora_inicio or not hora_fin:
+            return Response(
+                {"error": "Debe proporcionar fecha, hora_inicio y hora_fin"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Actualizar la cita
+        try:
+            from datetime import datetime
+            cita.fecha = datetime.strptime(fecha, '%Y-%m-%d').date()
+            cita.hora_inicio = datetime.strptime(hora_inicio, '%H:%M').time()
+            cita.hora_fin = datetime.strptime(hora_fin, '%H:%M').time()
+            cita.save()
+            
+            serializer = self.get_serializer(cita)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(
+                {"error": f"Formato de fecha u hora inválido: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
             )
         except ValidationError as e:
             return Response(

@@ -100,7 +100,7 @@ class RegistroSerializer(serializers.Serializer):
             email=correo,
             password=clave,
             rol=rol,
-            identificacion=validated_data.get('identificacion', '')
+            identificacion=validated_data.get('identificacion') or None
         )
         
         # Crear Cuenta

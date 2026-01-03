@@ -10,6 +10,28 @@ class EstadoCita(models.TextChoices):
     FINALIZADA = 'FINALIZADA', 'Finalizada'
 
 
+class Servicio(models.Model):
+    """
+    Servicio de peluquería disponible.
+    Define los servicios que ofrece la peluquería con duración y precio.
+    """
+    nombre = models.CharField(max_length=100, unique=True)
+    descripcion = models.TextField(blank=True)
+    duracion_minutos = models.IntegerField(help_text="Duración en minutos")
+    precio = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio en EUR")
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Servicio"
+        verbose_name_plural = "Servicios"
+        ordering = ['nombre']
+    
+    def __str__(self):
+        return f"{self.nombre} ({self.duracion_minutos} min - €{self.precio})"
+
+
 class Mascota(models.Model):
     """
     Mascota de un cliente.
