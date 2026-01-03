@@ -1,8 +1,17 @@
 from rest_framework import serializers
-from .models import Cita, Horario, Mascota, EstadoCita
+from .models import Cita, Horario, Mascota, EstadoCita, Servicio
 from datetime import datetime, timedelta
 import requests
 from django.conf import settings
+
+
+class ServicioSerializer(serializers.ModelSerializer):
+    """Serializer para servicios de peluquería."""
+    
+    class Meta:
+        model = Servicio
+        fields = ['id', 'nombre', 'descripcion', 'duracion_minutos', 'precio', 'activo', 'creado_en', 'actualizado_en']
+        read_only_fields = ['creado_en', 'actualizado_en']
 
 
 class MascotaSerializer(serializers.ModelSerializer):
@@ -111,6 +120,11 @@ class CitaCreateSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         """Validaciones adicionales de negocio."""
+        # Debug logging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"CitaCreateSerializer.validate() - attrs received: {attrs}")
+        
         hora_inicio = attrs.get('hora_inicio')
         hora_fin = attrs.get('hora_fin')
         fecha = attrs.get('fecha')
@@ -123,11 +137,11 @@ class CitaCreateSerializer(serializers.ModelSerializer):
                 "hora_fin": "La hora de fin debe ser posterior a la hora de inicio"
             })
         
-        # Validar duración mínima (1 hora)
+        # Validar duración mínima (30 minutos en lugar de 1 hora)
         duracion = datetime.combine(datetime.today(), hora_fin) - datetime.combine(datetime.today(), hora_inicio)
-        if duracion < timedelta(hours=1):
+        if duracion < timedelta(minutes=30):
             raise serializers.ValidationError({
-                "hora_fin": "La cita debe durar al menos 1 hora"
+                "hora_fin": "La cita debe durar al menos 30 minutos"
             })
         
         # Validar disponibilidad del peluquero en ese horario
@@ -139,29 +153,30 @@ class CitaCreateSerializer(serializers.ModelSerializer):
             }
             dia_es = dias_es.get(dia_nombre, dia_nombre)
             
-            # Buscar horario del peluquero para ese día
-            horarios = Horario.objects.filter(
-                peluquero_id=peluquero_id,
-                dia=dia_es,
-                activo=True
-            )
-            
-            if not horarios.exists():
-                raise serializers.ValidationError({
-                    "fecha": f"El peluquero no trabaja los {dia_es}"
-                })
-            
-            # Validar que la hora esté dentro del horario laboral
-            horario_valido = False
-            for horario in horarios:
-                if horario.hora_inicio <= hora_inicio and hora_fin <= horario.hora_fin:
-                    horario_valido = True
-                    break
-            
-            if not horario_valido:
-                raise serializers.ValidationError({
-                    "hora_inicio": "La hora solicitada no está dentro del horario laboral del peluquero"
-                })
+            # TODO: Descomentar validación de horarios cuando estén configurados
+            # # Buscar horario del peluquero para ese día
+            # horarios = Horario.objects.filter(
+            #     peluquero_id=peluquero_id,
+            #     dia=dia_es,
+            #     activo=True
+            # )
+            # 
+            # if not horarios.exists():
+            #     raise serializers.ValidationError({
+            #         "fecha": f"El peluquero no trabaja los {dia_es}"
+            #     })
+            # 
+            # # Validar que la hora esté dentro del horario laboral
+            # horario_valido = False
+            # for horario in horarios:
+            #     if horario.hora_inicio <= hora_inicio and hora_fin <= horario.hora_fin:
+            #         horario_valido = True
+            #         break
+            # 
+            # if not horario_valido:
+            #     raise serializers.ValidationError({
+            #         "hora_inicio": "La hora solicitada no está dentro del horario laboral del peluquero"
+            #     })
             
             # Validar que no haya conflicto con otras citas confirmadas
             citas_conflicto = Cita.objects.filter(

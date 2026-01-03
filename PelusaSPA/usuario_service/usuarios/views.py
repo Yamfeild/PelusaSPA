@@ -77,7 +77,7 @@ class LoginView(APIView):
 
 class PerfilView(APIView):
     """
-    Endpoint para obtener el perfil del usuario autenticado.
+    Endpoint para obtener y actualizar el perfil del usuario autenticado.
     """
     permission_classes = [IsAuthenticated]
 
@@ -105,6 +105,39 @@ class PerfilView(APIView):
                 data['perfil'] = PeluqueroSerializer(user.persona.peluquero).data
         
         return Response(data, status=status.HTTP_200_OK)
+    
+    def put(self, request):
+        """Actualizar los datos de persona del usuario autenticado."""
+        user = request.user
+        
+        if not hasattr(user, 'persona'):
+            return Response(
+                {"error": "El usuario no tiene un perfil de persona asociado"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Actualizar los datos de persona
+        persona = user.persona
+        serializer = PersonaSerializer(persona, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            
+            # Si es cliente, actualizar datos de cliente
+            if user.rol == User.Rol.CLIENTE and hasattr(persona, 'cliente'):
+                direccion = request.data.get('direccion')
+                if direccion is not None:
+                    persona.cliente.direccion = direccion
+                    persona.cliente.save()
+            
+            # Devolver el perfil actualizado
+            return self.get(request)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request):
+        """Alias para actualización parcial."""
+        return self.put(request)
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -165,8 +198,23 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def peluqueros(self, request):
-        """Atajo para listar únicamente usuarios con rol PELUQUERO."""
-        qs = self.get_queryset().filter(rol=User.Rol.PELUQUERO).select_related('persona')
-        results = [self._serialize_user(u) for u in qs]
+        """Atajo para listar únicamente usuarios con rol PELUQUERO que tengan persona y perfil de peluquero."""
+        qs = self.get_queryset().filter(
+            rol=User.Rol.PELUQUERO
+        ).select_related('persona', 'persona__peluquero')
+        
+        # Filtrar solo los que tienen persona y perfil de peluquero completos
+        results = []
+        for u in qs:
+            if hasattr(u, 'persona') and u.persona and hasattr(u.persona, 'peluquero') and u.persona.peluquero:
+                user_data = self._serialize_user(u)
+                # Agregar información específica del peluquero
+                if 'persona' in user_data:
+                    user_data['persona']['peluquero'] = {
+                        'especialidad': u.persona.peluquero.especialidad,
+                        'experiencia': u.persona.peluquero.experiencia
+                    }
+                results.append(user_data)
+        
         return Response(results, status=status.HTTP_200_OK)
 
