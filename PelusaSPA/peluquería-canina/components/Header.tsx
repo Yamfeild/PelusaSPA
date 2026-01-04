@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -40,6 +40,9 @@ const Header: React.FC = () => {
           <nav className="flex items-center gap-6 text-sm font-medium">
             <Link to="/" className="text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark transition-colors">Inicio</Link>
             <Link to="/services" className="text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark transition-colors">Nuestros Servicios</Link>
+            {user?.rol === 'ADMIN' && (
+              <Link to="/admin" className="text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark transition-colors font-semibold">Panel Admin</Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-2">
@@ -77,6 +80,9 @@ const Header: React.FC = () => {
            <nav className="flex flex-col gap-4 text-base font-medium">
             <Link to="/" className="text-text-light dark:text-text-dark" onClick={() => setIsMenuOpen(false)}>Inicio</Link>
             <Link to="/services" className="text-text-light dark:text-text-dark" onClick={() => setIsMenuOpen(false)}>Nuestros Servicios</Link>
+            {user?.rol === 'ADMIN' && (
+              <Link to="/admin" className="text-text-light dark:text-text-dark font-semibold" onClick={() => setIsMenuOpen(false)}>Panel Admin</Link>
+            )}
             <div className="h-px bg-border-light dark:bg-border-dark my-2"></div>
              <button onClick={() => { toggleTheme(); setIsMenuOpen(false); }} className="flex items-center gap-2 text-text-light dark:text-text-dark">
                 <span className="material-symbols-outlined">{isDark ? 'light_mode' : 'dark_mode'}</span>

@@ -10,6 +10,11 @@ services:
           - /api/auth
         strip_path: false
         
+      - name: registro_route
+        paths:
+          - /api/registro
+        strip_path: false
+        
       - name: usuarios_route
         paths:
           - /api/usuarios
@@ -32,5 +37,10 @@ services:
       - name: mascotas_route
         paths:
           - /api/mascotas
+        strip_path: false
+      
+      - name: servicios_route
+        paths:
+          - /api/servicios
         strip_path: false
 

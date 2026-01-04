@@ -22,6 +22,12 @@ export const citasApi: AxiosInstance = axios.create({
 
 // Interceptor para agregar el token JWT a todas las peticiones
 const addAuthToken = (config: any) => {
+  // Para GET a /servicios/, no enviar token (solicitud pública)
+  if (config.method === 'get' && config.url?.includes('/servicios/')) {
+    delete config.headers.Authorization;
+    return config;
+  }
+  
   const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -34,6 +40,11 @@ citasApi.interceptors.request.use(addAuthToken);
 
 // Interceptor para manejar errores de autenticación
 const handleAuthError = async (error: any) => {
+  // Si es una solicitud GET a /servicios/ (público), no redirigir a login
+  if (error.config?.url?.includes('/servicios/') && error.config?.method === 'get') {
+    return Promise.reject(error);
+  }
+  
   if (error.response?.status === 401) {
     const refreshToken = localStorage.getItem('refresh_token');
     

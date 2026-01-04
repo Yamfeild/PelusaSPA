@@ -255,24 +255,26 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Appointments Section */}
-        <div className="w-full lg:w-2/3 flex flex-col">
-            <h2 className="text-2xl font-bold mb-4 text-text-light dark:text-text-dark">Mis Citas</h2>
-            <div className="flex border-b border-border-light dark:border-border-dark gap-8 mb-6">
-                <button 
-                    onClick={() => setActiveTab('upcoming')}
-                    className={`pb-3 pt-2 text-sm font-bold border-b-[3px] transition-colors ${activeTab === 'upcoming' ? 'border-primary text-text-light dark:text-text-dark' : 'border-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light'}`}
-                >
-                    Próximas Citas ({citasPendientes.length})
-                </button>
-                <button 
-                    onClick={() => setActiveTab('history')}
-                    className={`pb-3 pt-2 text-sm font-bold border-b-[3px] transition-colors ${activeTab === 'history' ? 'border-primary text-text-light dark:text-text-dark' : 'border-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light'}`}
-                >
-                    Historial de Citas ({citasHistorial.length})
-                </button>
-            </div>
+      {/* Secciones de Citas y Mascotas solo para CLIENTE */}
+      {user?.rol === 'CLIENTE' && (
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Appointments Section */}
+          <div className="w-full lg:w-2/3 flex flex-col">
+              <h2 className="text-2xl font-bold mb-4 text-text-light dark:text-text-dark">Mis Citas</h2>
+              <div className="flex border-b border-border-light dark:border-border-dark gap-8 mb-6">
+                  <button 
+                      onClick={() => setActiveTab('upcoming')}
+                      className={`pb-3 pt-2 text-sm font-bold border-b-[3px] transition-colors ${activeTab === 'upcoming' ? 'border-primary text-text-light dark:text-text-dark' : 'border-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light'}`}
+                  >
+                      Próximas Citas ({citasPendientes.length})
+                  </button>
+                  <button 
+                      onClick={() => setActiveTab('history')}
+                      className={`pb-3 pt-2 text-sm font-bold border-b-[3px] transition-colors ${activeTab === 'history' ? 'border-primary text-text-light dark:text-text-dark' : 'border-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light'}`}
+                  >
+                      Historial de Citas ({citasHistorial.length})
+                  </button>
+              </div>
 
             <div className="flex flex-col gap-4">
                 {activeTab === 'upcoming' ? (
@@ -393,6 +395,27 @@ const Dashboard: React.FC = () => {
             </div>
         </div>
       </div>
+      )}
+
+      {/* Mensaje para ADMIN */}
+      {user?.rol === 'ADMIN' && (
+        <div className="flex flex-col items-center justify-center py-16 gap-6">
+          <div className="text-center">
+            <span className="material-symbols-outlined text-8xl text-primary mb-4">admin_panel_settings</span>
+            <h2 className="text-3xl font-bold text-text-light dark:text-text-dark mb-2">Panel de Administración</h2>
+            <p className="text-subtext-light dark:text-subtext-dark mb-6">
+              Gestiona usuarios, servicios, horarios y visualiza todas las citas del sistema
+            </p>
+            <Link 
+              to="/admin" 
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-primary text-text-light text-lg font-bold hover:bg-opacity-90 transition-colors"
+            >
+              <span className="material-symbols-outlined">dashboard</span>
+              Ir al Panel Admin
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -40,14 +40,34 @@ class IsPeluquero(IsAuthenticated):
         return hasattr(request.user, 'rol') and request.user.rol == 'PELUQUERO'
 
 
-class ServicioViewSet(viewsets.ReadOnlyModelViewSet):
+class ServicioViewSet(viewsets.ModelViewSet):
     """
-    ViewSet para listar servicios.
-    Solo lectura, acceso público.
+    ViewSet para gestionar servicios.
+    - GET: Acceso público (lista servicios activos)
+    - POST/PUT/PATCH/DELETE: Solo ADMIN
     """
-    queryset = Servicio.objects.filter(activo=True)
+    queryset = Servicio.objects.all()
     serializer_class = ServicioSerializer
-    permission_classes = [AllowAny]
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAdmin()]
+    
+    def get_queryset(self):
+        # Verificar si el usuario es admin autenticado
+        is_admin = (
+            self.request.user.is_authenticated and 
+            hasattr(self.request.user, 'rol') and 
+            self.request.user.rol == 'ADMIN'
+        )
+        
+        # Para admin, mostrar todos los servicios
+        if is_admin:
+            return Servicio.objects.all().order_by('-actualizado_en')
+        
+        # Para público (no autenticado) y otros roles, solo mostrar activos
+        return Servicio.objects.filter(activo=True).order_by('nombre')
 
 
 class MascotaViewSet(viewsets.ModelViewSet):
@@ -99,7 +119,12 @@ class HorarioViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Filtrar horarios según consulta."""
-        queryset = Horario.objects.filter(activo=True)
+        # Si es ADMIN, mostrar todos los horarios (activos e inactivos)
+        if self.request.user and hasattr(self.request.user, 'rol') and self.request.user.rol == 'ADMIN':
+            queryset = Horario.objects.all()
+        else:
+            # Para otros usuarios, solo activos
+            queryset = Horario.objects.filter(activo=True)
         
         # Filtrar por peluquero_id si se pasa como query param
         peluquero_id = self.request.query_params.get('peluquero_id')
@@ -205,9 +230,34 @@ class CitaViewSet(viewsets.ModelViewSet):
         """
         Al crear cita, validar que el cliente solo pueda agendar para sus propias mascotas.
         """
-        if not hasattr(self.request.user, 'rol') or self.request.user.rol != 'CLIENTE':
-            raise ValidationError("Solo los clientes pueden agendar citas")
+        # DEBUG: Imprimir información del request
+        print("=" * 60)
+        print("🔍 DEBUG - perform_create CitaViewSet")
+        print(f"📨 Request user: {self.request.user}")
+        print(f"🔐 Is authenticated: {self.request.user.is_authenticated}")
+        print(f"👤 User type: {type(self.request.user)}")
+        print(f"📋 Has 'rol' attr: {hasattr(self.request.user, 'rol')}")
+        if hasattr(self.request.user, 'rol'):
+            print(f"🎭 Rol value: '{self.request.user.rol}'")
+        if hasattr(self.request.user, '__dict__'):
+            print(f"📦 User attrs: {self.request.user.__dict__}")
+        print("=" * 60)
         
+        # Verificar que el usuario está autenticado
+        if not self.request.user.is_authenticated:
+            print("❌ Usuario NO autenticado")
+            raise ValidationError("Debes estar autenticado para agendar una cita")
+        
+        # Verificar que el usuario es cliente
+        if not hasattr(self.request.user, 'rol'):
+            print("❌ Usuario NO tiene atributo 'rol'")
+            raise ValidationError("El usuario no tiene rol asignado. Contacta al administrador.")
+        
+        if self.request.user.rol != 'CLIENTE':
+            print(f"❌ Rol incorrecto: '{self.request.user.rol}' (esperado: 'CLIENTE')")
+            raise ValidationError(f"Solo los clientes pueden agendar citas. Tu rol es: {self.request.user.rol}")
+        
+        print("✅ Validación de rol exitosa - Usuario es CLIENTE")
         serializer.save()
     
     @action(detail=True, methods=['post'], permission_classes=[IsPeluquero])
