@@ -12,7 +12,7 @@ export interface Cita {
   fecha: string;
   hora_inicio: string;
   hora_fin: string;
-  estado: 'PENDIENTE' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA';
+  estado: 'PENDIENTE' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA' | 'NO_ASISTIO';
   estado_display?: string;
   notas?: string;
   creada_en?: string;
@@ -78,6 +78,18 @@ export const citasService = {
   // Cancelar una cita
   async cancelarCita(id: number): Promise<Cita> {
     const response = await citasApi.post(`/citas/${id}/cancelar/`);
+    return response.data;
+  },
+
+  // Confirmar una cita (solo peluquero)
+  async confirmarCita(id: number): Promise<Cita> {
+    const response = await citasApi.post(`/citas/${id}/confirmar/`);
+    return response.data;
+  },
+
+  // Marcar que el cliente no asistió (solo peluquero)
+  async marcarNoAsistio(id: number): Promise<Cita> {
+    const response = await citasApi.post(`/citas/${id}/marcar_no_asistio/`);
     return response.data;
   },
 

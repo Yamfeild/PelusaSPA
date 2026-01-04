@@ -86,9 +86,10 @@ const BookAppointment: React.FC = () => {
         horarios: horariosData?.length || 0
       });
       
+      const activePeluqueros = (peluquerosData || []).filter(p => p.is_active !== false);
       setMascotas(mascotasData);
       setServicios(serviciosData || []);
-      setPeluqueros(peluquerosData || []);
+      setPeluqueros(activePeluqueros);
       setHorarios(horariosData || []);
     } catch (error: any) {
       console.error('❌ Error general al cargar datos:', error);
@@ -212,9 +213,17 @@ const BookAppointment: React.FC = () => {
     try {
       // Obtener día de la semana (0=Lunes, 6=Domingo)
       const selectedDateObj = new Date(selectedDate);
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
       const dayOfWeek = selectedDateObj.getDay();
       // Ajustar porque JS usa 0=Domingo pero nosotros usamos 0=Lunes
       const dayOfWeekAdjusted = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+      // Bloquear días pasados completos
+      if (selectedDateObj < todayMidnight) {
+        setAvailableHorarios([]);
+        return;
+      }
 
       // Buscar horarios del peluquero para ese día
       const peluqueroHorarios = horarios.filter(h => 
@@ -238,8 +247,10 @@ const BookAppointment: React.FC = () => {
           parseInt(selectedPeluquero),
           selectedDate
         );
-        // Filtrar solo citas activas (excluir CANCELADA)
-        citasExistentes = todasLasCitas.filter(c => c.estado !== 'CANCELADA');
+        // Filtrar solo citas activas que bloquean horario
+        citasExistentes = todasLasCitas.filter(c => 
+          c.estado === 'PENDIENTE' || c.estado === 'CONFIRMADA'
+        );
         console.log(`📅 Citas existentes en ${selectedDate} para peluquero ${selectedPeluquero}:`, citasExistentes);
       } catch (err) {
         console.error('⚠️ Error al obtener citas:', err);
@@ -274,6 +285,9 @@ const BookAppointment: React.FC = () => {
       // Generar slots de hora con información de ocupación
       const slots: { time: string; occupied: boolean }[] = [];
       const serviceDuration = selectedService.duracion_minutos;
+      const today = new Date();
+      const isToday = selectedDateObj.toDateString() === today.toDateString();
+      const currentMinutes = today.getHours() * 60 + today.getMinutes();
 
       for (const horario of peluqueroHorarios) {
         const [startHour, startMin] = horario.hora_inicio.split(':').map(Number);
@@ -289,8 +303,9 @@ const BookAppointment: React.FC = () => {
           const hours = Math.floor(time / 60);
           const minutes = time % 60;
           const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-          
-          const occupied = isSlotOccupied(timeStr, serviceDuration);
+
+          const occupiedByPastTime = isToday && time <= currentMinutes;
+          const occupied = occupiedByPastTime || isSlotOccupied(timeStr, serviceDuration);
           slots.push({ time: timeStr, occupied });
           
           if (occupied) {
@@ -380,22 +395,35 @@ const BookAppointment: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       console.error('❌ Error al crear cita:', err);
-      console.error('📄 Error response:', err.response);
+      console.error('📄 Error response:', err.response?.data);
       
       let errorMsg = 'Error al crear la cita';
-      if (err.response?.data?.error) {
-        errorMsg = err.response.data.error;
-      } else if (err.response?.data?.detail) {
-        errorMsg = err.response.data.detail;
-      } else if (Array.isArray(err.response?.data)) {
-        // Si es una lista de errores
-        errorMsg = err.response.data
-          .map((e: any) => typeof e === 'string' ? e : Object.values(e).join(', '))
-          .join('; ');
+      
+      // Extraer mensaje de error del backend
+      const data = err.response?.data;
+      if (data) {
+        if (typeof data === 'object' && !Array.isArray(data)) {
+          // Buscar el primer error en los campos
+          for (const key in data) {
+            const value = data[key];
+            if (Array.isArray(value)) {
+              errorMsg = value[0];
+              break;
+            } else if (typeof value === 'string') {
+              errorMsg = value;
+              break;
+            }
+          }
+        } else if (Array.isArray(data)) {
+          errorMsg = data[0]?.detail || data[0] || 'Error en la solicitud';
+        } else if (typeof data === 'string') {
+          errorMsg = data;
+        }
       } else if (err.message) {
         errorMsg = err.message;
       }
       
+      console.error('📢 Mensaje de error mostrado:', errorMsg);
       setError(errorMsg);
     } finally {
       setSubmitting(false);

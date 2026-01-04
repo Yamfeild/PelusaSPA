@@ -86,8 +86,16 @@ const Reschedule: React.FC = () => {
     try {
       // Obtener día de la semana
       const selectedDateObj = new Date(selectedDate);
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
       const dayOfWeek = selectedDateObj.getDay();
       const dayOfWeekAdjusted = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+      // Bloquear días pasados completos
+      if (selectedDateObj < todayMidnight) {
+        setAvailableHorarios([]);
+        return;
+      }
 
       // Buscar horarios del peluquero para ese día
       const peluqueroHorarios = horarios.filter(h => 
@@ -109,8 +117,10 @@ const Reschedule: React.FC = () => {
           cita.peluquero_id,
           selectedDate
         );
-        // Filtrar la cita actual y las canceladas
-        citasExistentes = todasLasCitas.filter(c => c.id !== cita.id && c.estado !== 'CANCELADA');
+        // Filtrar la cita actual y mantener solo las que bloquean (pendiente/confirmada)
+        citasExistentes = todasLasCitas.filter(c => 
+          c.id !== cita.id && (c.estado === 'PENDIENTE' || c.estado === 'CONFIRMADA')
+        );
         console.log(`📅 Citas existentes en ${selectedDate} (excluyendo actual y canceladas):`, citasExistentes);
       } catch (err) {
         console.error('⚠️ Error al obtener citas:', err);
@@ -142,6 +152,9 @@ const Reschedule: React.FC = () => {
       // Generar slots de hora con información de ocupación
       const slots: { time: string; occupied: boolean }[] = [];
       const serviceDuration = servicio.duracion_minutos;
+      const today = new Date();
+      const isToday = selectedDateObj.toDateString() === today.toDateString();
+      const currentMinutes = today.getHours() * 60 + today.getMinutes();
 
       for (const horario of peluqueroHorarios) {
         const [startHour, startMin] = horario.hora_inicio.split(':').map(Number);
@@ -155,8 +168,9 @@ const Reschedule: React.FC = () => {
           const hours = Math.floor(time / 60);
           const minutes = time % 60;
           const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-          
-          const occupied = isSlotOccupied(timeStr, serviceDuration);
+
+          const occupiedByPastTime = isToday && time <= currentMinutes;
+          const occupied = occupiedByPastTime || isSlotOccupied(timeStr, serviceDuration);
           slots.push({ time: timeStr, occupied });
         }
       }

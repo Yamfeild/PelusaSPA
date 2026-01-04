@@ -7,17 +7,17 @@ const Home: React.FC = () => {
       <div className="w-full px-4 sm:px-8 md:px-16 lg:px-24 xl:px-40 py-5 max-w-[1400px]">
         {/* Hero */}
         <div className="mt-5 rounded-xl overflow-hidden relative">
-            <div className="flex min-h-[480px] flex-col gap-6 bg-cover bg-center bg-no-repeat items-center justify-center p-4 text-center" 
+            <div className="flex min-h-[400px] sm:min-h-[500px] md:min-h-[600px] flex-col gap-6 bg-contain sm:bg-cover bg-center sm:bg-[center_20%] bg-no-repeat items-center justify-center p-4 sm:p-6 md:p-8 text-center" 
                  style={{ backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuDgvlX9-fMVJzRXA75mdC5Lxg-gJcmb_xQ6kbU-qcDBLLduIEM7fqYZlv_dzalb9Xc9rPwt2cjRJJhMnoZ9dwoZw1iqtfenbMiC8VzBK7oFea-rKJA2Stm53J5Klus4URY-EPToF6C9MG6cd8lIJrh8AYGDAb_aGMHuxNeGVde04tj6Nv9451HiKZIx-NPnMNaYRSECfmbB9C6xd2zE112XKL7kwdsEkg8AERcofMZrxlnFSXYWhVEA1_CScM_Vvt8mGUWWrC-IaNE")' }}>
-                <div className="flex flex-col gap-2 max-w-2xl z-10">
-                    <h1 className="text-white text-4xl sm:text-5xl font-black leading-tight tracking-[-0.033em]">
+                <div className="flex flex-col gap-2 max-w-2xl z-10 mt-auto">
+                    <h1 className="text-white text-3xl sm:text-4xl md:text-5xl font-black leading-tight tracking-[-0.033em] drop-shadow-lg">
                     Donde Tu Mejor Amigo Recibe el Mejor Cuidado
                     </h1>
-                    <h2 className="text-white text-sm sm:text-base font-normal leading-normal">
+                    <h2 className="text-white text-sm sm:text-base font-normal leading-normal drop-shadow-md">
                     Ofrecemos servicios de peluquería premium en un ambiente seguro y amigable para tu mascota.
                     </h2>
                 </div>
-                <Link to="/book-appointment" className="z-10 flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 sm:h-12 sm:px-5 bg-primary text-[#0d1b17] text-sm sm:text-base font-bold leading-normal tracking-[0.015em] hover:bg-opacity-90 transition-colors">
+                <Link to="/book-appointment" className="z-10 flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 sm:h-12 sm:px-5 bg-primary text-[#0d1b17] text-sm sm:text-base font-bold leading-normal tracking-[0.015em] hover:bg-opacity-90 transition-colors shadow-lg mb-4">
                     <span className="truncate">Reservar una Cita</span>
                 </Link>
             </div>
