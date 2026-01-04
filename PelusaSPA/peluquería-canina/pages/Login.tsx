@@ -32,9 +32,11 @@ const Login: React.FC = () => {
       const storedUser = localStorage.getItem('user');
       const user = storedUser ? JSON.parse(storedUser) : null;
       if (user?.rol === 'ADMIN') {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
+      } else if (user?.rol === 'PELUQUERO') {
+        navigate('/peluquero', { replace: true });
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
@@ -72,7 +74,7 @@ const Login: React.FC = () => {
         fecha_nacimiento: fechaNacimiento,
         telefono
       });
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       setError(err.message || 'Error al registrarse');
     } finally {

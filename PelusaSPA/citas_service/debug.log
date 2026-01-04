@@ -1,0 +1,431 @@
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Combo Completo (120 min - €12.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 6), 'hora_inicio': datetime.time(12, 0), 'hora_fin': datetime.time(14, 0)}
+Bad Request: /api/citas/
+"POST /api/citas/ HTTP/1.1" 400 65
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Combo Completo (120 min - €12.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 6), 'hora_inicio': datetime.time(12, 0), 'hora_fin': datetime.time(14, 0)}
+Bad Request: /api/citas/
+"POST /api/citas/ HTTP/1.1" 400 65
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Combo Completo (120 min - €12.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 6), 'hora_inicio': datetime.time(12, 0), 'hora_fin': datetime.time(14, 0)}
+Bad Request: /api/citas/
+"POST /api/citas/ HTTP/1.1" 400 65
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Combo Completo (120 min - €12.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 7), 'hora_inicio': datetime.time(12, 0), 'hora_fin': datetime.time(14, 0)}
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Combo Completo (120 min - €12.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 6), 'hora_inicio': datetime.time(12, 0), 'hora_fin': datetime.time(14, 0)}
+Bad Request: /api/citas/
+"POST /api/citas/ HTTP/1.1" 400 65
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Combo Completo (120 min - €12.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 4), 'hora_inicio': datetime.time(7, 0), 'hora_fin': datetime.time(9, 0)}
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Combo Completo (120 min - €12.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 4), 'hora_inicio': datetime.time(7, 0), 'hora_fin': datetime.time(9, 0)}
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Combo Completo (120 min - €12.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 6), 'hora_inicio': datetime.time(12, 0), 'hora_fin': datetime.time(14, 0)}
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Unauthorized: /api/citas/
+Unauthorized: /api/mascotas/
+"GET /api/citas/ HTTP/1.1" 401 58
+"GET /api/mascotas/ HTTP/1.1" 401 58
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Combo Completo (120 min - €12.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 6), 'hora_inicio': datetime.time(12, 0), 'hora_fin': datetime.time(14, 0)}
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Corte de Pelo (90 min - €35.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 6), 'hora_inicio': datetime.time(14, 0), 'hora_fin': datetime.time(15, 30)}
+Bad Request: /api/citas/
+"POST /api/citas/ HTTP/1.1" 400 76
+CitaCreateSerializer.validate() - attrs received: {'mascota': <Mascota: Pelusa (Pastor Alemán) - Dueño: 15>, 'servicio': <Servicio: Corte de Pelo (90 min - €35.00)>, 'peluquero_id': 21, 'fecha': datetime.date(2026, 1, 7), 'hora_inicio': datetime.time(12, 0), 'hora_fin': datetime.time(13, 30)}
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548
+Not Found: /
+"GET / HTTP/1.1" 404 2548

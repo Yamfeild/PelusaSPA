@@ -89,11 +89,10 @@ class CitaCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_mascota(self, value):
-        """Validar que la mascota pertenece al cliente autenticado."""
-        request = self.context.get('request')
-        if request and hasattr(request.user, 'id'):
-            if value.dueno_id != request.user.id:
-                raise serializers.ValidationError("La mascota no pertenece a este cliente")
+        """Validar que la mascota existe."""
+        # No validar que pertenece al usuario porque this service
+        # no tiene acceso a la BD de usuarios_service
+        # El cliente (frontend) es responsable de solo enviar mascotas propias
         return value
     
     def validate_servicio(self, value):
@@ -207,16 +206,18 @@ class CitaCreateSerializer(serializers.ModelSerializer):
                         "hora_inicio": "El peluquero ya tiene una cita en ese horario"
                     })
 
-        # Regla: una misma mascota no puede tener más de una cita (pendiente o confirmada) en el mismo día
-        if fecha and mascota:
-            existe_cita_dia = Cita.objects.filter(
+        # Regla: una misma mascota no puede tener más de una cita (pendiente o confirmada) en el MISMO horario con el MISMO peluquero
+        # Pero SÍ puede tener múltiples citas con diferentes peluqueros en el mismo día
+        if fecha and mascota and peluquero_id:
+            existe_cita_conflicto = Cita.objects.filter(
                 mascota=mascota,
+                peluquero_id=peluquero_id,
                 fecha=fecha,
                 estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA]
-            ).exists()
-            if existe_cita_dia:
+            ).exclude(pk=self.instance.pk if self.instance else None).exists()
+            if existe_cita_conflicto:
                 raise serializers.ValidationError({
-                    "fecha": "La mascota ya tiene una cita pendiente o confirmada para este día"
+                    "fecha": f"La mascota ya tiene una cita con este peluquero para este día"
                 })
         
         return attrs

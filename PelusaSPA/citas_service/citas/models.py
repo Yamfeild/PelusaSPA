@@ -8,6 +8,7 @@ class EstadoCita(models.TextChoices):
     CONFIRMADA = 'CONFIRMADA', 'Confirmada'
     CANCELADA = 'CANCELADA', 'Cancelada'
     FINALIZADA = 'FINALIZADA', 'Finalizada'
+    NO_ASISTIO = 'NO_ASISTIO', 'No Asistió'
 
 
 class Servicio(models.Model):
@@ -190,5 +191,14 @@ class Cita(models.Model):
         if self.estado not in [EstadoCita.CONFIRMADA, EstadoCita.PENDIENTE]:
             raise ValidationError("Estado inválido para finalizar")
         self.estado = EstadoCita.FINALIZADA
+        self.save(update_fields=['estado', 'actualizada_en'])
+    
+    def marcar_no_asistio(self):
+        """Marca que el cliente no asistió a la cita."""
+        if self.estado in [EstadoCita.CANCELADA, EstadoCita.NO_ASISTIO]:
+            raise ValidationError(f"La cita ya está en estado {self.estado}")
+        if self.estado == EstadoCita.FINALIZADA:
+            raise ValidationError("No se puede marcar como no asistió una cita finalizada")
+        self.estado = EstadoCita.NO_ASISTIO
         self.save(update_fields=['estado', 'actualizada_en'])
 

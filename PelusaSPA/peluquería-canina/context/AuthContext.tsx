@@ -22,7 +22,7 @@ interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<Profile | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsAuthenticated(false);
   };
 
-  const refreshProfile = async () => {
+  const refreshProfile = async (): Promise<Profile | null> => {
     try {
       const profile: Profile = await authService.getProfile();
       const userData: User = {
@@ -123,8 +123,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      return profile;
     } catch (error) {
       console.error('Error al actualizar perfil:', error);
+      return null;
     }
   };
 

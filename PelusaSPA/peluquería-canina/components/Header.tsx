@@ -1,17 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const [isDark, setIsDark] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const profilePath = user?.rol === 'ADMIN'
+    ? '/admin'
+    : user?.rol === 'PELUQUERO'
+      ? '/peluquero'
+      : '/dashboard';
+
+  const handleAvatarClick = () => {
+    if (!isAuthenticated) return;
+    setShowUserMenu((prev) => !prev);
+  };
+
+  const goToProfile = () => {
+    setShowUserMenu(false);
+    navigate(profilePath);
+  };
+
+  const goToEditProfile = () => {
+    setShowUserMenu(false);
+    const isOnPeluqueroPanel = user?.rol === 'PELUQUERO' && location.pathname.includes('/peluquero');
+    if (isOnPeluqueroPanel) {
+      window.dispatchEvent(new CustomEvent('openPeluqueroProfileEdit'));
+      return;
+    }
+    navigate(`${profilePath}?edit=1`);
+  };
+
+  const handleLogout = () => {
+    setShowUserMenu(false);
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
     if (document.documentElement.classList.contains('dark')) {
       setIsDark(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!showUserMenu) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserMenu]);
 
   const toggleTheme = () => {
     if (isDark) {
@@ -43,6 +90,9 @@ const Header: React.FC = () => {
             {user?.rol === 'ADMIN' && (
               <Link to="/admin" className="text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark transition-colors font-semibold">Panel Admin</Link>
             )}
+            {user?.rol === 'PELUQUERO' && (
+              <Link to="/peluquero" className="text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark transition-colors font-semibold">Panel Peluquero</Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-2">
@@ -54,9 +104,22 @@ const Header: React.FC = () => {
             </button>
             
             {isAuthenticated ? (
-              <Link to="/dashboard" className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-text-light dark:text-text-dark dark:bg-primary/30">
-                 <span className="material-symbols-outlined">person</span>
-              </Link>
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  type="button"
+                  onClick={handleAvatarClick}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-text-light dark:text-text-dark dark:bg-primary/30"
+                >
+                   <span className="material-symbols-outlined">person</span>
+                </button>
+                 {showUserMenu && (
+                   <div className="absolute right-0 mt-4 w-48 rounded-lg border border-border-light bg-white text-text-light shadow-lg z-50">
+                      <button onClick={goToProfile} className="w-full text-left px-4 py-2 text-sm hover:bg-primary/10">Perfil</button>
+                      <button onClick={goToEditProfile} className="w-full text-left px-4 py-2 text-sm hover:bg-primary/10">Editar perfil</button>
+                      <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Cerrar sesión</button>
+                   </div>
+                 )}
+              </div>
             ) : (
               <Link to="/login" className="flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-bold text-text-light transition-colors hover:bg-primary/90">
                 Iniciar Sesión
@@ -83,16 +146,29 @@ const Header: React.FC = () => {
             {user?.rol === 'ADMIN' && (
               <Link to="/admin" className="text-text-light dark:text-text-dark font-semibold" onClick={() => setIsMenuOpen(false)}>Panel Admin</Link>
             )}
+            {user?.rol === 'PELUQUERO' && (
+              <Link to="/peluquero" className="text-text-light dark:text-text-dark font-semibold" onClick={() => setIsMenuOpen(false)}>Panel Peluquero</Link>
+            )}
             <div className="h-px bg-border-light dark:bg-border-dark my-2"></div>
              <button onClick={() => { toggleTheme(); setIsMenuOpen(false); }} className="flex items-center gap-2 text-text-light dark:text-text-dark">
                 <span className="material-symbols-outlined">{isDark ? 'light_mode' : 'dark_mode'}</span>
                 <span>{isDark ? 'Modo Claro' : 'Modo Oscuro'}</span>
              </button>
             {isAuthenticated ? (
-               <Link to="/dashboard" className="flex items-center gap-2 text-text-light dark:text-text-dark" onClick={() => setIsMenuOpen(false)}>
-                 <span className="material-symbols-outlined">person</span>
-                 <span>Mi Perfil</span>
-               </Link>
+               <>
+                 <button onClick={() => { goToProfile(); setIsMenuOpen(false); }} className="flex items-center gap-2 text-text-light dark:text-text-dark">
+                   <span className="material-symbols-outlined">person</span>
+                   <span>Mi Perfil</span>
+                 </button>
+                 <button onClick={() => { goToEditProfile(); setIsMenuOpen(false); }} className="flex items-center gap-2 text-text-light dark:text-text-dark">
+                   <span className="material-symbols-outlined">edit</span>
+                   <span>Editar perfil</span>
+                 </button>
+                 <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center gap-2 text-red-600">
+                   <span className="material-symbols-outlined">logout</span>
+                   <span>Cerrar sesión</span>
+                 </button>
+               </>
             ) : (
               <Link to="/login" className="text-primary font-bold" onClick={() => setIsMenuOpen(false)}>Iniciar Sesión</Link>
             )}
