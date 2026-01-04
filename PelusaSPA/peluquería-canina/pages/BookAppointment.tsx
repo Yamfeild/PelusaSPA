@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { mascotasService, citasService, authService, Mascota } from '../services';
+import { useAuth } from '../context/AuthContext';
+import { mascotasService, citasService, authService, Mascota, Servicio } from '../services';
+import type { Horario } from '../services/citasService';
 
 const steps = ["Servicio", "Mascota", "Peluquero", "Fecha y Hora", "Confirmación"];
 
 const BookAppointment: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
+  const [servicios, setServicios] = useState<Servicio[]>([]);
   const [peluqueros, setPeluqueros] = useState<any[]>([]);
+  const [horarios, setHorarios] = useState<Horario[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Verificar autenticación
+  useEffect(() => {
+    if (!user) {
+      setError('Debes iniciar sesión para agendar una cita');
+    }
+  }, [user]);
 
   // Cargar mascotas del usuario
   useEffect(() => {
@@ -21,35 +33,166 @@ const BookAppointment: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [mascotasData, peluquerosData] = await Promise.all([
-        mascotasService.getMascotas(),
-        authService.getPeluqueros()
-      ]);
+      setError('');
+      
+      console.log('🔄 Iniciando carga de datos...');
+      
+      // Cargar servicios primero (público, sin token)
+      let serviciosData: Servicio[] = [];
+      try {
+        console.log('📡 Llamando a citasService.getServicios()...');
+        serviciosData = await citasService.getServicios();
+        console.log('✅ Servicios recibidos:', serviciosData);
+      } catch (serviciosError: any) {
+        console.error('❌ Error al obtener servicios:', serviciosError);
+        console.error('Response:', serviciosError.response);
+        console.error('Status:', serviciosError.response?.status);
+        console.error('Data:', serviciosError.response?.data);
+      }
+      
+      // Cargar mascotas y peluqueros (requieren autenticación)
+      let mascotasData: Mascota[] = [];
+      let peluquerosData: any[] = [];
+      let horariosData: Horario[] = [];
+      
+      try {
+        console.log('📡 Llamando a mascotasService.getMascotas()...');
+        mascotasData = await mascotasService.getMascotas();
+        console.log('✅ Mascotas recibidas:', mascotasData);
+      } catch (mascotasError: any) {
+        console.error('❌ Error al obtener mascotas:', mascotasError);
+      }
+      
+      try {
+        console.log('📡 Llamando a authService.getPeluqueros()...');
+        peluquerosData = await authService.getPeluqueros();
+        console.log('✅ Peluqueros recibidos:', peluquerosData);
+      } catch (peluquerosError: any) {
+        console.error('❌ Error al obtener peluqueros:', peluquerosError);
+      }
+
+      try {
+        console.log('📡 Llamando a citasService.getHorarios()...');
+        horariosData = await citasService.getHorarios();
+        console.log('✅ Horarios recibidos:', horariosData);
+      } catch (horariosError: any) {
+        console.error('❌ Error al obtener horarios:', horariosError);
+      }
+      
+      console.log('📊 Datos finales:', {
+        servicios: serviciosData?.length || 0,
+        mascotas: mascotasData?.length || 0,
+        peluqueros: peluquerosData?.length || 0,
+        horarios: horariosData?.length || 0
+      });
+      
+      const activePeluqueros = (peluquerosData || []).filter(p => p.is_active !== false);
       setMascotas(mascotasData);
-      setPeluqueros(peluquerosData);
-    } catch (error) {
-      console.error('Error al cargar datos:', error);
-      setError('Error al cargar información');
+      setServicios(serviciosData || []);
+      setPeluqueros(activePeluqueros);
+      setHorarios(horariosData || []);
+    } catch (error: any) {
+      console.error('❌ Error general al cargar datos:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      
+      let errorMsg = 'Error al cargar información';
+      if (error.response?.data?.detail) {
+        errorMsg = error.response.data.detail;
+      } else if (error.response?.status === 401) {
+        errorMsg = 'Error de autenticación. Por favor, inicia sesión nuevamente.';
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
+      setError(errorMsg);
+      setServicios([]);
+      setMascotas([]);
+      setPeluqueros([]);
+      setHorarios([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Mock Data de servicios (esto se mantiene hasta que tengamos endpoint de servicios)
-  const services = [
-    { id: 1, title: "Baño y Secado", time: "60 min", price: 25, img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDjVpA1DMnBx9mcS-lRhnouRPcrUCIEqSYYfKd6o2k1JApIFjpXw9OY_QPWG71wpAC81hcZN0bNoVEwHSdgdiptVw04nTKGEYw1JDSyV6gqRh-h9TXeT_sE0xt8s2zi_N6BW2inRs6IK1tpWzvg8EgOYYln2Heg3ICYjX7xoKhjS3o_vMHL0dld85dSEjOgC2WYNfV67jB0tvKg1h6O02AECsbAfiOJEtXadKYYzI18hMWxNNq8Cq_ScCTn_qJmta8AUvXYxIi1KOM" },
-    { id: 2, title: "Corte de Pelo", time: "90 min", price: 35, img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB46c1YNWVzcuaJWwH8_E3GzVwc5rP83v9_TqcUHJMTNk0cDLGcaU2_CCgdt6l9cqkzD5Sy3QKqGgP-QWh6q0QwS4_7qPydvuRTH86vepOOZJYOrpwXeATYB6Uzor8gaxI_r0DOBNmlZ355_Dgv6J-j8S92djWCxb4njAnDue1oG2hzS2GEkq7c1qGFAUgprbstce1mNZ-sHMdNzR7rWt4DXqOzWrmkldcfqFSkZVGh2UywiU5LywH0MkrCvw77o1Qn5OR8l3AH29E" },
-    { id: 3, title: "Combo Completo", time: "120 min", price: 50, img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDTF5oExAC_KhhncOQJf7ulTgvRKIreoWFVM8-Xi51qpC23PjYblc2o-9vWX-lwG63T2SKimgLFM1f3AXYAxuPtj4yQ5km5gHUn46qejb0Mm9QiIAM6pH84fVWu0VTTgHooKCE4umjxPifZ-qcL0ND_pn_EsPrdc19XwjuKJ8Bu7bAtlkIXHkrcIQDkTM9h88OYcpWQdF-Yimthsa6oeLuUDUb5sbtbesbHO9dEX-hrI2smAlPbRuo33IaTz2GNkw3hYontMsiwyb0" }
-  ];
-
-  const [selectedService, setSelectedService] = useState<any>(null);
+  const [selectedService, setSelectedService] = useState<Servicio | null>(null);
   const [selectedPet, setSelectedPet] = useState("");
   const [selectedPeluquero, setSelectedPeluquero] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [availableHorarios, setAvailableHorarios] = useState<{ time: string; occupied: boolean }[]>([]);
+  const [loadingHorarios, setLoadingHorarios] = useState(false);
 
   const handleNext = async () => {
+    // Validar paso 1: debe haber servicio seleccionado
+    if (currentStep === 0 && !selectedService) {
+      setError('Por favor, selecciona un servicio');
+      return;
+    }
+
+    // Validar paso 2: debe haber mascota seleccionada
+    if (currentStep === 1 && !selectedPet) {
+      setError('Por favor, selecciona una mascota');
+      return;
+    }
+
+    // Validar paso 3: debe haber peluquero seleccionado
+    if (currentStep === 2 && !selectedPeluquero) {
+      setError('Por favor, selecciona un peluquero antes de continuar');
+      return;
+    }
+
+    // Validar paso 4: debe haber fecha y hora seleccionadas
+    if (currentStep === 3) {
+      if (!selectedDate) {
+        setError('Por favor, selecciona una fecha');
+        return;
+      }
+
+      if (!selectedTime) {
+        setError('Por favor, selecciona una hora disponible');
+        return;
+      }
+
+      // Validar que la hora tiene suficiente tiempo en el horario del peluquero
+      const timeToMinutes = (timeStr: string): number => {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+      };
+
+      const selectedDateObj = new Date(selectedDate);
+      const dayOfWeek = selectedDateObj.getDay();
+      const dayOfWeekAdjusted = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+      const peluqueroHorarios = horarios.filter(h => 
+        h.peluquero_id.toString() === selectedPeluquero && 
+        h.dia_semana === dayOfWeekAdjusted && 
+        h.activo
+      );
+
+      const selectedTimeMinutes = timeToMinutes(selectedTime);
+      const serviceDuration = selectedService?.duracion_minutos || 0;
+      const endTimeMinutes = selectedTimeMinutes + serviceDuration;
+
+      let hasValidHorario = false;
+      for (const horario of peluqueroHorarios) {
+        const horarioEnd = timeToMinutes(horario.hora_fin);
+        if (endTimeMinutes <= horarioEnd) {
+          hasValidHorario = true;
+          break;
+        }
+      }
+
+      if (!hasValidHorario) {
+        setError(`No hay suficiente tiempo. El servicio requiere ${serviceDuration} minutos y el turno termina antes.`);
+        return;
+      }
+    }
+    
+    // Limpiar error al avanzar
+    setError('');
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -58,7 +201,154 @@ const BookAppointment: React.FC = () => {
     }
   };
 
+  // Función para calcular horarios disponibles y detectar conflictos
+  const calculateAvailableHorarios = async () => {
+    if (!selectedPeluquero || !selectedDate || !selectedService) {
+      setAvailableHorarios([]);
+      return;
+    }
+
+    setLoadingHorarios(true);
+
+    try {
+      // Obtener día de la semana (0=Lunes, 6=Domingo)
+      const selectedDateObj = new Date(selectedDate);
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
+      const dayOfWeek = selectedDateObj.getDay();
+      // Ajustar porque JS usa 0=Domingo pero nosotros usamos 0=Lunes
+      const dayOfWeekAdjusted = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+      // Bloquear días pasados completos
+      if (selectedDateObj < todayMidnight) {
+        setAvailableHorarios([]);
+        return;
+      }
+
+      // Buscar horarios del peluquero para ese día
+      const peluqueroHorarios = horarios.filter(h => 
+        h.peluquero_id.toString() === selectedPeluquero && 
+        h.dia_semana === dayOfWeekAdjusted && 
+        h.activo
+      );
+
+      if (peluqueroHorarios.length === 0) {
+        console.log(`🔍 Sin horarios para peluquero ${selectedPeluquero} en día ${dayOfWeekAdjusted}`);
+        setAvailableHorarios([]);
+        return;
+      }
+
+      console.log(`✅ Encontrados ${peluqueroHorarios.length} horarios para peluquero ${selectedPeluquero} en día ${dayOfWeekAdjusted}:`, peluqueroHorarios);
+
+      // Obtener citas existentes para esta fecha y peluquero
+      let citasExistentes = [];
+      try {
+        const todasLasCitas = await citasService.getCitasPorFecha(
+          parseInt(selectedPeluquero),
+          selectedDate
+        );
+        // Filtrar solo citas activas que bloquean horario
+        citasExistentes = todasLasCitas.filter(c => 
+          c.estado === 'PENDIENTE' || c.estado === 'CONFIRMADA'
+        );
+        console.log(`📅 Citas existentes en ${selectedDate} para peluquero ${selectedPeluquero}:`, citasExistentes);
+      } catch (err) {
+        console.error('⚠️ Error al obtener citas:', err);
+        // Continuar sin citas si hay error
+      }
+
+      // Función para convertir hora string a minutos
+      const timeToMinutes = (timeStr: string): number => {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+      };
+
+      // Función para verificar si un slot está ocupado
+      const isSlotOccupied = (slotTime: string, serviceDuration: number): boolean => {
+        const slotMinutes = timeToMinutes(slotTime);
+        const slotEndMinutes = slotMinutes + serviceDuration;
+
+        // Verificar contra cada cita existente
+        for (const cita of citasExistentes) {
+          const citaStartMinutes = timeToMinutes(cita.hora_inicio);
+          const citaEndMinutes = timeToMinutes(cita.hora_fin);
+
+          // Hay conflicto si el slot se superpone con la cita
+          if (slotMinutes < citaEndMinutes && slotEndMinutes > citaStartMinutes) {
+            return true;
+          }
+        }
+
+        return false;
+      };
+
+      // Generar slots de hora con información de ocupación
+      const slots: { time: string; occupied: boolean }[] = [];
+      const serviceDuration = selectedService.duracion_minutos;
+      const today = new Date();
+      const isToday = selectedDateObj.toDateString() === today.toDateString();
+      const currentMinutes = today.getHours() * 60 + today.getMinutes();
+
+      for (const horario of peluqueroHorarios) {
+        const [startHour, startMin] = horario.hora_inicio.split(':').map(Number);
+        const [endHour, endMin] = horario.hora_fin.split(':').map(Number);
+
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = endHour * 60 + endMin;
+
+        console.log(`📅 Horario: ${horario.hora_inicio}-${horario.hora_fin} (duración servicio: ${serviceDuration}min)`);
+
+        // Generar slots cada 30 minutos
+        for (let time = startMinutes; time + serviceDuration <= endMinutes; time += 30) {
+          const hours = Math.floor(time / 60);
+          const minutes = time % 60;
+          const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+          const occupiedByPastTime = isToday && time <= currentMinutes;
+          const occupied = occupiedByPastTime || isSlotOccupied(timeStr, serviceDuration);
+          slots.push({ time: timeStr, occupied });
+          
+          if (occupied) {
+            console.log(`❌ Slot ${timeStr} OCUPADO`);
+          }
+        }
+      }
+
+      // Ordenar slots por hora
+      slots.sort((a, b) => a.time.localeCompare(b.time));
+
+      console.log(`🎯 Slots calculados (${slots.length}): ${slots.map(s => `${s.time}${s.occupied ? '(X)' : ''}`).join(', ')}`);
+      setAvailableHorarios(slots);
+
+      // Auto-seleccionar la primera hora disponible (no ocupada)
+      if (slots.length > 0) {
+        const firstAvailable = slots.find(s => !s.occupied);
+        if (firstAvailable) {
+          console.log(`✅ Auto-seleccionando primera hora disponible: ${firstAvailable.time}`);
+          setSelectedTime(firstAvailable.time);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Error al calcular horarios:', err);
+      setAvailableHorarios([]);
+    } finally {
+      setLoadingHorarios(false);
+    }
+  };
+
+  // Recalcular horarios cuando cambien peluquero, fecha o servicio
+  useEffect(() => {
+    calculateAvailableHorarios();
+  }, [selectedPeluquero, selectedDate, selectedService, horarios]);
+
   const handleSubmitCita = async () => {
+    // Verificar autenticación primero
+    if (!user) {
+      setError('Debes iniciar sesión para agendar una cita. Redirigiendo al login...');
+      setTimeout(() => navigate('/login'), 2000);
+      return;
+    }
+
     if (!selectedService || !selectedPet || !selectedPeluquero || !selectedDate || !selectedTime) {
       setError('Por favor completa todos los campos');
       return;
@@ -68,19 +358,33 @@ const BookAppointment: React.FC = () => {
     setError('');
 
     try {
+      // DEBUG: Verificar token antes de enviar
+      const token = localStorage.getItem('access_token');
+      console.log('🔑 Token en localStorage:', token ? `${token.substring(0, 50)}...` : 'NO EXISTE');
+      console.log('👤 Usuario actual:', user);
+      
       // La fecha ya está en formato YYYY-MM-DD desde el calendario
       const fecha = selectedDate;
       
       // Calcular hora_fin basada en la duración del servicio
       const horaInicio = selectedTime;
-      const duracionMinutos = parseInt(selectedService.time) || 60;
+      const duracionMinutos = selectedService.duracion_minutos;
       const [horas, minutos] = horaInicio.split(':').map(Number);
       const totalMinutos = horas * 60 + minutos + duracionMinutos;
       const horaFin = `${Math.floor(totalMinutos / 60).toString().padStart(2, '0')}:${(totalMinutos % 60).toString().padStart(2, '0')}`;
 
+      console.log('📋 Datos a enviar:', {
+        mascota_id: parseInt(selectedPet),
+        servicio: selectedService.id,
+        peluquero_id: parseInt(selectedPeluquero),
+        fecha: fecha,
+        hora_inicio: horaInicio,
+        hora_fin: horaFin
+      });
+
       await citasService.createCita({
         mascota_id: parseInt(selectedPet),
-        servicio: selectedService.title,
+        servicio: selectedService.id,
         peluquero_id: parseInt(selectedPeluquero),
         fecha: fecha,
         hora_inicio: horaInicio,
@@ -90,7 +394,37 @@ const BookAppointment: React.FC = () => {
       // Navegar al dashboard después de crear la cita
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Error al crear la cita');
+      console.error('❌ Error al crear cita:', err);
+      console.error('📄 Error response:', err.response?.data);
+      
+      let errorMsg = 'Error al crear la cita';
+      
+      // Extraer mensaje de error del backend
+      const data = err.response?.data;
+      if (data) {
+        if (typeof data === 'object' && !Array.isArray(data)) {
+          // Buscar el primer error en los campos
+          for (const key in data) {
+            const value = data[key];
+            if (Array.isArray(value)) {
+              errorMsg = value[0];
+              break;
+            } else if (typeof value === 'string') {
+              errorMsg = value;
+              break;
+            }
+          }
+        } else if (Array.isArray(data)) {
+          errorMsg = data[0]?.detail || data[0] || 'Error en la solicitud';
+        } else if (typeof data === 'string') {
+          errorMsg = data;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      console.error('📢 Mensaje de error mostrado:', errorMsg);
+      setError(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -132,24 +466,59 @@ const BookAppointment: React.FC = () => {
                 {currentStep === 0 && (
                     <section>
                         <h2 className="text-xl font-bold mb-4 text-text-light dark:text-text-dark">1. Elige el servicio que necesitas</h2>
-                        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
-                            {services.map(service => (
+                        {loading ? (
+                          <div className="text-center p-8 text-subtext-light dark:text-subtext-dark">Cargando servicios...</div>
+                        ) : servicios.length === 0 ? (
+                          <div className="text-center p-8 text-subtext-light dark:text-subtext-dark">No hay servicios disponibles</div>
+                        ) : (
+                          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+                            {servicios.map(servicio => {
+                              // Usar imagen_url del backend si existe, sino usar la imagen por defecto
+                              const getImageUrl = (servicio: any) => {
+                                if (servicio.imagen_url) {
+                                  return servicio.imagen_url;
+                                }
+                                
+                                // Mapeo de imágenes por defecto según el nombre del servicio
+                                const nombreLower = servicio.nombre.toLowerCase();
+                                if (nombreLower.includes('baño') || nombreLower.includes('higien')) {
+                                  return 'https://lh3.googleusercontent.com/aida-public/AB6AXuBpZnT1TZQGqgdvWPJfTulsTilvr9wNzmN3B-PtSFg2cYshrljusCPV_NKiXjHcl8jbOs0Pxjmz6u_soc8Z5mpKWCkPRN_qYzHmrdcFdDXqFipwBCsUWrwCsDGISEjS6OJ0BqlufVjwUO_qxLHcj4DRObkXAV0ZalTkkw-PwR7-Mb__2muwwGj4MGCkLrW2uKD6mdIRWbuDtXUJF4C9PI7ybGSt2gSZuL8d9WX5YApnHtlpYM_Me-3MsxKKkmVYDFvht4b1weogMqw';
+                                } else if (nombreLower.includes('corte') || nombreLower.includes('tijera')) {
+                                  return 'https://lh3.googleusercontent.com/aida-public/AB6AXuA9bsuWWLnHuLo7hcanZIX1YCSinTYVoWMjwZmRdebHoDsKZsaDHkmrbBTKMsmVSU_fIfLzYF5tXqGVMMbT06NyCdwN0UaqmmWOT3Wbf3sIiR8P8tw7UFIucQwU-8QkLomq4UmxhDBl11INvKE9kVjiy5Iq1Hl177QpI08vwFvx93BNwPubEPII3tKE2YdedMiXA6omZN40sQ0KTBZPTYLJIV9HBnn5KBJoXc64LW-ic57PAKU_Ma83n8kq0lCTA1CMFwsiz7QgAQE';
+                                } else if (nombreLower.includes('tratamiento') || nombreLower.includes('antiparasit') || nombreLower.includes('especial')) {
+                                  return 'https://lh3.googleusercontent.com/aida-public/AB6AXuC7Fcpmv7A7CAQ_kHxUzjyXskylSOSWr4juLLwNJr6C6gs0_XFX02bDj798sImr5PtlG1SYJkUgyulbqfxmeeWDRYFehACk_j5TSnFNArxHEjQMvinogl6E5fmxdPZRPbA9Ynba0hYZcZp1zs75MW2jOkepVpABCrElfmChlmJHyBjfXW9RVlpVrYuWRTI2GEv7wct5vzJrxZuF5SXTvsDRu9BNr9V15xmQB_e43XkQhZThLtACqGF9zrfugG4FI0ZHwwD4k8-iKWc';
+                                } else if (nombreLower.includes('completo') || nombreLower.includes('premium') || nombreLower.includes('combo')) {
+                                  return 'https://lh3.googleusercontent.com/aida-public/AB6AXuDX-vNDbY1iMsta1Ms7hY43dF_oSy_c-y3jzvestEO1dPbZYU8cgma4ggjBuQFDXYAYemIcngvRnk28eAi9_HIPF5d2q38U4WA7H3pYdgVEMY9iOpP3NMt2veWE3e01sr6VUhVje_0keeW3jilwCGJTN1nc2uvkd_KZYpaIX1IaQKa3k0w5nbn3H6xPlppjJHLPbHbEjFuMnAEsLrFBCR27DE4cEMM7wq8raPWQaIfishO2BzqWS_Efbd3xzX5ssGolmGA0PxMW6fo';
+                                }
+                                // Imagen por defecto para servicios que no coincidan
+                                return 'https://lh3.googleusercontent.com/aida-public/AB6AXuBpZnT1TZQGqgdvWPJfTulsTilvr9wNzmN3B-PtSFg2cYshrljusCPV_NKiXjHcl8jbOs0Pxjmz6u_soc8Z5mpKWCkPRN_qYzHmrdcFdDXqFipwBCsUWrwCsDGISEjS6OJ0BqlufVjwUO_qxLHcj4DRObkXAV0ZalTkkw-PwR7-Mb__2muwwGj4MGCkLrW2uKD6mdIRWbuDtXUJF4C9PI7ybGSt2gSZuL8d9WX5YApnHtlpYM_Me-3MsxKKkmVYDFvht4b1weogMqw';
+                              };
+
+                              return (
                                 <div 
-                                    key={service.id}
-                                    onClick={() => setSelectedService(service)}
+                                    key={servicio.id}
+                                    onClick={() => setSelectedService(servicio)}
                                     className={`flex flex-col gap-3 pb-3 rounded-xl border p-3 cursor-pointer transition-all hover:shadow-md
-                                    ${selectedService?.id === service.id 
+                                    ${selectedService?.id === servicio.id 
                                         ? 'border-primary bg-primary/10 dark:bg-primary/5' 
                                         : 'border-border-light dark:border-border-dark hover:border-primary/50'}`}
                                 >
-                                    <div className="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg" style={{ backgroundImage: `url("${service.img}")` }}></div>
+                                    <div 
+                                      className="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg"
+                                      style={{ backgroundImage: `url(${getImageUrl(servicio)})` }}
+                                    />
                                     <div>
-                                        <p className="text-text-light dark:text-text-dark text-base font-bold">{service.title}</p>
-                                        <p className="text-subtext-light dark:text-subtext-dark text-sm">Duración: {service.time} - €{service.price}</p>
+                                        <p className="text-text-light dark:text-text-dark text-base font-bold">{servicio.nombre}</p>
+                                        <p className="text-subtext-light dark:text-subtext-dark text-sm">Duración: {servicio.duracion_minutos} min - €{servicio.precio}</p>
+                                        {servicio.descripcion && (
+                                          <p className="text-subtext-light dark:text-subtext-dark text-xs mt-1">{servicio.descripcion}</p>
+                                        )}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                              );
+                            })}
+                          </div>
+                        )}
                     </section>
                 )}
 
@@ -271,54 +640,89 @@ const BookAppointment: React.FC = () => {
                                     {['LU','MA','MI','JU','VI','SA','DO'].map(d => <span key={d} className="font-medium text-subtext-light dark:text-subtext-dark">{d}</span>)}
                                 </div>
                                 <div className="grid grid-cols-7 gap-1">
-                                    {Array.from({length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()}, (_, i) => {
-                                      const day = i + 1;
-                                      const year = currentMonth.getFullYear();
-                                      const month = currentMonth.getMonth();
-                                      const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-                                      const today = new Date();
-                                      today.setHours(0, 0, 0, 0);
-                                      const currentDate = new Date(year, month, day);
-                                      const isPast = currentDate < today;
+                                    {/* Calcular espacios vacíos al inicio según el día de la semana */}
+                                    {(() => {
+                                      const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+                                      const dayOfWeek = firstDay.getDay();
+                                      // Convertir: JS usa 0=Domingo, nosotros 0=Lunes
+                                      const startOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
                                       
-                                      return (
-                                        <button 
-                                            key={day}
-                                            type="button"
-                                            disabled={isPast}
-                                            onClick={() => setSelectedDate(dateStr)}
-                                            className={`aspect-square rounded-full flex items-center justify-center text-sm transition-colors ${
-                                              isPast 
-                                                ? 'text-subtext-light/30 dark:text-subtext-dark/30 cursor-not-allowed'
-                                                : selectedDate === dateStr 
-                                                  ? 'bg-primary text-text-light font-bold' 
-                                                  : 'hover:bg-primary/20 text-text-light dark:text-text-dark'
-                                            }`}
-                                        >
-                                            {day}
-                                        </button>
-                                      );
-                                    })}
+                                      // Crear espacios vacíos
+                                      const emptyDays = Array.from({length: startOffset}, (_, i) => (
+                                        <div key={`empty-${i}`} />
+                                      ));
+                                      
+                                      // Crear días del mes
+                                      const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+                                      const monthDays = Array.from({length: daysInMonth}, (_, i) => {
+                                        const day = i + 1;
+                                        const year = currentMonth.getFullYear();
+                                        const month = currentMonth.getMonth();
+                                        const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        const currentDate = new Date(year, month, day);
+                                        const isPast = currentDate < today;
+                                        
+                                        return (
+                                          <button 
+                                              key={day}
+                                              type="button"
+                                              disabled={isPast}
+                                              onClick={() => setSelectedDate(dateStr)}
+                                              className={`aspect-square rounded-full flex items-center justify-center text-sm transition-colors ${
+                                                isPast 
+                                                  ? 'text-subtext-light/30 dark:text-subtext-dark/30 cursor-not-allowed'
+                                                  : selectedDate === dateStr 
+                                                    ? 'bg-primary text-text-light font-bold' 
+                                                    : 'hover:bg-primary/20 text-text-light dark:text-text-dark'
+                                              }`}
+                                          >
+                                              {day}
+                                          </button>
+                                        );
+                                      });
+                                      
+                                      return [...emptyDays, ...monthDays];
+                                    })()}
                                 </div>
                             </div>
                             <div className="md:col-span-2 border-l border-border-light dark:border-border-dark pl-6">
                                 <p className="font-bold text-lg mb-4 text-text-light dark:text-text-dark">Horarios</p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {["09:00", "11:00", "12:00", "16:00", "17:00", "18:00"].map(time => (
-                                        <button 
-                                            key={time}
-                                            type="button"
-                                            onClick={() => setSelectedTime(time)}
-                                            className={`py-2 rounded-lg border text-sm transition-all ${
-                                              selectedTime === time 
-                                                ? 'bg-primary text-text-light border-primary' 
-                                                : 'border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:border-primary hover:text-primary'
-                                            }`}
-                                        >
-                                            {time}
-                                        </button>
-                                    ))}
-                                </div>
+                                {loadingHorarios ? (
+                                    <div className="flex items-center gap-2 text-subtext-light dark:text-subtext-dark">
+                                        <span className="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+                                        Cargando horarios...
+                                    </div>
+                                ) : availableHorarios.length === 0 ? (
+                                    <p className="text-subtext-light dark:text-subtext-dark text-sm">
+                                        {selectedPeluquero && selectedDate && selectedService 
+                                            ? 'No hay horarios disponibles para esta fecha' 
+                                            : 'Selecciona un peluquero, mascota y servicio primero'}
+                                    </p>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {availableHorarios.map(slot => (
+                                            <button 
+                                                key={slot.time}
+                                                type="button"
+                                                disabled={slot.occupied}
+                                                onClick={() => !slot.occupied && setSelectedTime(slot.time)}
+                                                className={`py-2 rounded-lg border text-sm transition-all ${
+                                                  slot.occupied
+                                                    ? 'opacity-50 cursor-not-allowed bg-red-500/10 border-red-500/30 text-red-500/50 dark:text-red-500/40' 
+                                                    : selectedTime === slot.time 
+                                                      ? 'bg-primary text-text-light border-primary font-semibold' 
+                                                      : 'border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:border-primary hover:text-primary'
+                                                }`}
+                                                title={slot.occupied ? 'Este horario está ocupado' : slot.time}
+                                            >
+                                                {slot.time}
+                                                {slot.occupied && <span className="text-xs ml-1">✕</span>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                          </div>
                     </section>
@@ -344,7 +748,7 @@ const BookAppointment: React.FC = () => {
                     <div className="border-b border-border-light dark:border-border-dark pb-4 flex flex-col gap-3 text-sm">
                         <div className="flex justify-between">
                           <span className="text-subtext-light dark:text-subtext-dark">Servicio</span>
-                          <span className="font-semibold text-text-light dark:text-text-dark">{selectedService?.title || '-'}</span>
+                          <span className="font-semibold text-text-light dark:text-text-dark">{selectedService?.nombre || '-'}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-subtext-light dark:text-subtext-dark">Mascota</span>
@@ -371,7 +775,7 @@ const BookAppointment: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center text-lg">
                         <span className="font-bold text-text-light dark:text-text-dark">Total</span>
-                        <span className="font-black text-2xl text-text-light dark:text-text-dark">€{selectedService?.price || '0'}</span>
+                        <span className="font-black text-2xl text-text-light dark:text-text-dark">€{selectedService?.precio || '0'}</span>
                     </div>
                     
                     {currentStep === 4 && (

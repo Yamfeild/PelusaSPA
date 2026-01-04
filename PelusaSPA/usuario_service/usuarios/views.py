@@ -140,13 +140,19 @@ class PerfilView(APIView):
         return self.put(request)
 
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     """
-    ViewSet para consulta de usuarios (para otros microservicios).
-    Solo lectura, requiere autenticación.
+    ViewSet para gestión de usuarios.
+    - GET: Requiere autenticación
+    - PUT/PATCH/DELETE: Solo ADMIN
     """
     queryset = User.objects.all()
-    permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        # Permitir IsAuthenticated para lectura y para listar peluqueros (necesario para CLIENTE)
+        if self.action in ['list', 'retrieve', 'peluqueros']:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
     def _serialize_user(self, user: User):
         """Serialización consistente para list/retrieve."""
@@ -155,6 +161,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             'username': user.username,
             'email': user.email,
             'rol': user.rol,
+            'is_active': user.is_active,
         }
         if hasattr(user, 'persona'):
             data['persona'] = PersonaSerializer(user.persona).data
@@ -196,9 +203,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         """Obtener información del usuario actual."""
         return PerfilView.as_view()(request._request)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def peluqueros(self, request):
-        """Atajo para listar únicamente usuarios con rol PELUQUERO que tengan persona y perfil de peluquero."""
+        """Atajo para listar únicamente usuarios con rol PELUQUERO que tengan persona y perfil de peluquero.
+        Accesible para todos los usuarios autenticados (CLIENTE necesita ver la lista para agendar).
+        """
         qs = self.get_queryset().filter(
             rol=User.Rol.PELUQUERO
         ).select_related('persona', 'persona__peluquero')
@@ -217,4 +226,86 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 results.append(user_data)
         
         return Response(results, status=status.HTTP_200_OK)
+    
+    def update(self, request, pk=None):
+        """Actualizar un usuario (solo ADMIN)."""
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Actualizar datos básicos del usuario
+        if 'email' in request.data:
+            user.email = request.data['email']
+        if 'is_active' in request.data:
+            user.is_active = request.data['is_active']
+        user.save()
+        
+        # Actualizar persona si existe
+        if hasattr(user, 'persona') and request.data.get('persona'):
+            persona_data = request.data['persona']
+            persona = user.persona
+            if 'nombre' in persona_data:
+                persona.nombre = persona_data['nombre']
+            if 'apellido' in persona_data:
+                persona.apellido = persona_data['apellido']
+            if 'telefono' in persona_data:
+                persona.telefono = persona_data['telefono']
+            persona.save()
+            
+            # Actualizar perfil de peluquero si existe
+            if user.rol == User.Rol.PELUQUERO and hasattr(persona, 'peluquero') and request.data.get('perfil'):
+                perfil_data = request.data['perfil']
+                peluquero = persona.peluquero
+                if 'especialidad' in perfil_data:
+                    peluquero.especialidad = perfil_data['especialidad']
+                if 'experiencia' in perfil_data:
+                    peluquero.experiencia = perfil_data['experiencia']
+                peluquero.save()
+        
+        return Response(self._serialize_user(user), status=status.HTTP_200_OK)
+    
+    def partial_update(self, request, pk=None):
+        """Actualización parcial."""
+        return self.update(request, pk)
+    
+    def destroy(self, request, pk=None):
+        """
+        Desactivar usuario (alternar estado).
+        Si ya está desactivado y envías force_delete=true, lo elimina permanentemente.
+        """
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # No permitir eliminar el propio usuario admin
+        if user.id == request.user.id:
+            return Response({"error": "No puedes eliminar tu propio usuario"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verificar si se solicita eliminación permanente
+        force_delete = request.query_params.get('force_delete', 'false').lower() == 'true'
+        
+        if force_delete:
+            # Eliminar permanentemente solo si está desactivado
+            if not user.is_active:
+                user.delete()
+                return Response({
+                    "message": "Usuario eliminado permanentemente",
+                    "is_active": None
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "error": "Solo puedes eliminar permanentemente usuarios desactivados"
+                }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Alternar estado activo/inactivo
+            user.is_active = not user.is_active
+            user.save()
+            
+            estado = "activado" if user.is_active else "desactivado"
+            return Response({
+                "message": f"Usuario {estado} correctamente",
+                "is_active": user.is_active
+            }, status=status.HTTP_200_OK)
 

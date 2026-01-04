@@ -17,25 +17,46 @@ const Dashboard: React.FC = () => {
     direccion: ''
   });
   const [saving, setSaving] = useState(false);
+  const [historialEstado, setHistorialEstado] = useState<'ALL' | 'CANCELADA' | 'FINALIZADA' | 'NO_ASISTIO'>('ALL');
   
   const { user, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (user?.rol === 'PELUQUERO') {
+      navigate('/peluquero', { replace: true });
+      return;
+    }
     loadData();
-  }, []);
+  }, [user, navigate]);
 
   useEffect(() => {
-    // Cargar datos del usuario en el formulario cuando se abre el modal
-    if (showEditModal && user?.persona) {
-      setEditForm({
-        nombre: user.persona.nombre || '',
-        apellido: user.persona.apellidos || '',
-        telefono: user.persona.telefono || '',
-        direccion: user.persona.direccion || ''
-      });
-    }
-  }, [showEditModal, user]);
+    const loadForm = async () => {
+      if (!showEditModal) return;
+
+      if (user?.persona) {
+        setEditForm({
+          nombre: user.persona.nombre || '',
+          apellido: user.persona.apellido || (user.persona as any).apellidos || '',
+          telefono: user.persona.telefono || (user.persona as any).celular || '',
+          direccion: user.persona.direccion || ''
+        });
+        return;
+      }
+
+      const profile = await refreshProfile();
+      if (profile?.persona) {
+        setEditForm({
+          nombre: profile.persona.nombre || '',
+          apellido: profile.persona.apellido || (profile.persona as any).apellidos || '',
+          telefono: profile.persona.telefono || (profile.persona as any).celular || '',
+          direccion: (profile.persona as any).direccion || ''
+        });
+      }
+    };
+
+    loadForm();
+  }, [showEditModal, user, refreshProfile]);
 
   const loadData = async () => {
     try {
@@ -53,6 +74,12 @@ const Dashboard: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const fullName = user?.persona
+    ? `${user.persona.nombre || ''} ${user.persona.apellido || (user.persona as any).apellidos || ''}`.trim()
+    : user?.username || user?.email || 'Usuario';
+  const displayEmail = user?.email || user?.username || '-';
+  const displayPhone = user?.persona?.telefono || user?.persona?.celular || '';
 
   const handleLogout = () => {
     logout();
@@ -83,9 +110,17 @@ const Dashboard: React.FC = () => {
         direccion: editForm.direccion || undefined
       });
       
-      // Refrescar el perfil del usuario
-      await refreshProfile();
-      
+      // Refrescar el perfil del usuario y rehidratar el formulario
+      const profile = await refreshProfile();
+      if (profile?.persona) {
+        setEditForm({
+          nombre: profile.persona.nombre || '',
+          apellido: profile.persona.apellido || (profile.persona as any).apellidos || '',
+          telefono: profile.persona.telefono || (profile.persona as any).celular || '',
+          direccion: (profile.persona as any).direccion || ''
+        });
+      }
+
       setShowEditModal(false);
       setError('');
     } catch (err: any) {
@@ -96,7 +131,17 @@ const Dashboard: React.FC = () => {
   };
 
   const citasPendientes = citas.filter(c => c.estado === 'PENDIENTE' || c.estado === 'CONFIRMADA');
-  const citasHistorial = citas.filter(c => c.estado === 'FINALIZADA' || c.estado === 'CANCELADA');
+  const citasHistorial = citas
+    .filter(c => c.estado === 'FINALIZADA' || c.estado === 'CANCELADA' || c.estado === 'NO_ASISTIO')
+    .sort((a, b) => {
+      const dateA = new Date(a.fecha + 'T' + a.hora_inicio).getTime();
+      const dateB = new Date(b.fecha + 'T' + b.hora_inicio).getTime();
+      return dateB - dateA; // historial: más reciente primero
+    });
+
+  const citasHistorialFiltradas = citasHistorial.filter(c =>
+    historialEstado === 'ALL' ? true : c.estado === historialEstado
+  );
 
   const formatearFecha = (fecha: string, horaInicio: string) => {
     const date = new Date(fecha + 'T' + horaInicio);
@@ -117,6 +162,7 @@ const Dashboard: React.FC = () => {
       case 'PENDIENTE': return 'text-yellow-600 dark:text-yellow-400';
       case 'FINALIZADA': return 'text-blue-600 dark:text-blue-400';
       case 'CANCELADA': return 'text-red-600 dark:text-red-400';
+      case 'NO_ASISTIO': return 'text-gray-600 dark:text-gray-400';
       default: return 'text-gray-600 dark:text-gray-400';
     }
   };
@@ -140,11 +186,11 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex flex-col justify-center">
                     <p className="text-text-light dark:text-text-dark text-xl sm:text-2xl font-bold">
-                      {user?.persona?.nombre} {user?.persona?.apellido}
+                      {fullName}
                     </p>
-                    <p className="text-subtext-light dark:text-subtext-dark text-sm sm:text-base">{user?.email}</p>
-                    {user?.persona?.telefono && (
-                      <p className="text-subtext-light dark:text-subtext-dark text-sm sm:text-base">{user.persona.telefono}</p>
+                    <p className="text-subtext-light dark:text-subtext-dark text-sm sm:text-base">{displayEmail}</p>
+                    {displayPhone && (
+                      <p className="text-subtext-light dark:text-subtext-dark text-sm sm:text-base">{displayPhone}</p>
                     )}
                 </div>
             </div>
@@ -255,24 +301,26 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Appointments Section */}
-        <div className="w-full lg:w-2/3 flex flex-col">
-            <h2 className="text-2xl font-bold mb-4 text-text-light dark:text-text-dark">Mis Citas</h2>
-            <div className="flex border-b border-border-light dark:border-border-dark gap-8 mb-6">
-                <button 
-                    onClick={() => setActiveTab('upcoming')}
-                    className={`pb-3 pt-2 text-sm font-bold border-b-[3px] transition-colors ${activeTab === 'upcoming' ? 'border-primary text-text-light dark:text-text-dark' : 'border-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light'}`}
-                >
-                    Próximas Citas ({citasPendientes.length})
-                </button>
-                <button 
-                    onClick={() => setActiveTab('history')}
-                    className={`pb-3 pt-2 text-sm font-bold border-b-[3px] transition-colors ${activeTab === 'history' ? 'border-primary text-text-light dark:text-text-dark' : 'border-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light'}`}
-                >
-                    Historial de Citas ({citasHistorial.length})
-                </button>
-            </div>
+      {/* Secciones de Citas y Mascotas solo para CLIENTE */}
+      {user?.rol === 'CLIENTE' && (
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Appointments Section */}
+          <div className="w-full lg:w-2/3 flex flex-col">
+              <h2 className="text-2xl font-bold mb-4 text-text-light dark:text-text-dark">Mis Citas</h2>
+              <div className="flex border-b border-border-light dark:border-border-dark gap-8 mb-6">
+                  <button 
+                      onClick={() => setActiveTab('upcoming')}
+                      className={`pb-3 pt-2 text-sm font-bold border-b-[3px] transition-colors ${activeTab === 'upcoming' ? 'border-primary text-text-light dark:text-text-dark' : 'border-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light'}`}
+                  >
+                      Próximas Citas ({citasPendientes.length})
+                  </button>
+                    <button 
+                      onClick={() => setActiveTab('history')}
+                      className={`pb-3 pt-2 text-sm font-bold border-b-[3px] transition-colors ${activeTab === 'history' ? 'border-primary text-text-light dark:text-text-dark' : 'border-transparent text-subtext-light dark:text-subtext-dark hover:text-text-light'}`}
+                    >
+                      Historial de Citas ({citasHistorial.length})
+                    </button>
+              </div>
 
             <div className="flex flex-col gap-4">
                 {activeTab === 'upcoming' ? (
@@ -327,19 +375,46 @@ const Dashboard: React.FC = () => {
                     </div>
                   )
                 ) : (
-                  citasHistorial.length > 0 ? citasHistorial.map(cita => (
-                    <div key={cita.id} className="p-4 bg-white dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm opacity-75">
-                        <div className="flex flex-col gap-2">
-                            <p className={`text-sm font-medium ${getEstadoColor(cita.estado)}`}>{cita.estado}</p>
-                            <p className="text-text-light dark:text-text-dark text-lg font-bold">
-                              {cita.notas ? cita.notas.replace('Servicio: ', '') : 'Cita'} para {cita.mascota_nombre || `Mascota #${cita.mascota}`}
-                            </p>
-                            <p className="text-subtext-light dark:text-subtext-dark text-sm">
-                              {formatearFecha(cita.fecha, cita.hora_inicio)}
-                            </p>
+                  citasHistorial.length > 0 ? (
+                    <>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="text-sm font-semibold text-subtext-light dark:text-subtext-dark mr-2">Filtrar:</span>
+                        {(['ALL', 'FINALIZADA', 'CANCELADA', 'NO_ASISTIO'] as const).map(estado => (
+                          <button
+                            key={estado}
+                            onClick={() => setHistorialEstado(estado)}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                              historialEstado === estado
+                                ? 'bg-primary text-white border-primary'
+                                : 'bg-white dark:bg-card-dark text-subtext-light dark:text-subtext-dark border-border-light dark:border-border-dark hover:border-primary/60'
+                            }`}
+                          >
+                            {estado === 'ALL' ? 'Todos' : estado === 'NO_ASISTIO' ? 'No asistió' : estado.charAt(0) + estado.slice(1).toLowerCase()}
+                          </button>
+                        ))}
+                      </div>
+
+                      {citasHistorialFiltradas.length > 0 ? (
+                        citasHistorialFiltradas.map(cita => (
+                          <div key={cita.id} className="p-4 bg-white dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm opacity-75">
+                              <div className="flex flex-col gap-2">
+                                  <p className={`text-sm font-medium ${getEstadoColor(cita.estado)}`}>{cita.estado}</p>
+                                  <p className="text-text-light dark:text-text-dark text-lg font-bold">
+                                    {cita.notas ? cita.notas.replace('Servicio: ', '') : 'Cita'} para {cita.mascota_nombre || `Mascota #${cita.mascota}`}
+                                  </p>
+                                  <p className="text-subtext-light dark:text-subtext-dark text-sm">
+                                    {formatearFecha(cita.fecha, cita.hora_inicio)}
+                                  </p>
+                              </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-6 text-center text-subtext-light dark:text-subtext-dark border border-dashed border-border-light dark:border-border-dark rounded-xl">
+                          No hay citas con ese filtro.
                         </div>
-                    </div>
-                  )) : (
+                      )}
+                    </>
+                  ) : (
                     <div className="p-8 text-center text-subtext-light dark:text-subtext-dark border border-dashed border-border-light dark:border-border-dark rounded-xl">
                         No hay historial de citas.
                     </div>
@@ -393,6 +468,47 @@ const Dashboard: React.FC = () => {
             </div>
         </div>
       </div>
+      )}
+
+      {/* Mensaje para ADMIN */}
+      {user?.rol === 'ADMIN' && (
+        <div className="flex flex-col items-center justify-center py-16 gap-6">
+          <div className="text-center">
+            <span className="material-symbols-outlined text-8xl text-primary mb-4">admin_panel_settings</span>
+            <h2 className="text-3xl font-bold text-text-light dark:text-text-dark mb-2">Panel de Administración</h2>
+            <p className="text-subtext-light dark:text-subtext-dark mb-6">
+              Gestiona usuarios, servicios, horarios y visualiza todas las citas del sistema
+            </p>
+            <Link 
+              to="/admin" 
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-primary text-text-light text-lg font-bold hover:bg-opacity-90 transition-colors"
+            >
+              <span className="material-symbols-outlined">dashboard</span>
+              Ir al Panel Admin
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Mensaje para PELUQUERO */}
+      {user?.rol === 'PELUQUERO' && (
+        <div className="flex flex-col items-center justify-center py-16 gap-6">
+          <div className="text-center">
+            <span className="material-symbols-outlined text-8xl text-purple-600 mb-4">content_cut</span>
+            <h2 className="text-3xl font-bold text-text-light dark:text-text-dark mb-2">Panel del Peluquero</h2>
+            <p className="text-subtext-light dark:text-subtext-dark mb-6">
+              Gestiona tus citas, confirma reservas y marca asistencias
+            </p>
+            <Link 
+              to="/peluquero" 
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-purple-600 text-white text-lg font-bold hover:bg-purple-700 transition-colors"
+            >
+              <span className="material-symbols-outlined">calendar_month</span>
+              Ir al Panel de Peluquero
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

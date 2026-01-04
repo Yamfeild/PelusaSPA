@@ -11,16 +11,12 @@ class Command(BaseCommand):
     help = 'Crea un usuario administrador inicial si no existe'
 
     def handle(self, *args, **options):
-        # Verificar si ya existe un admin
-        if User.objects.filter(rol=User.Rol.ADMIN).exists():
+        # Eliminar admin existente si hay alguno
+        if User.objects.filter(username='admin').exists():
             self.stdout.write(
-                self.style.WARNING('Ya existe un usuario administrador en el sistema')
+                self.style.WARNING('Eliminando usuario admin existente...')
             )
-            admin = User.objects.filter(rol=User.Rol.ADMIN).first()
-            self.stdout.write(
-                self.style.SUCCESS(f'Usuario admin existente: {admin.username}')
-            )
-            return
+            User.objects.filter(username='admin').delete()
 
         # Crear admin por defecto
         try:
@@ -28,8 +24,8 @@ class Command(BaseCommand):
                 # Crear User
                 admin = User.objects.create_user(
                     username='admin',
-                    email='admin@peluqueria.com',
-                    password='admin123',  # Cambiar en producción
+                    email='admin@example.com',
+                    password='admin123',
                     rol=User.Rol.ADMIN,
                     identificacion='ADMIN001'
                 )
@@ -41,7 +37,7 @@ class Command(BaseCommand):
                 # Crear Cuenta
                 Cuenta.objects.create(
                     user=admin,
-                    correo='admin@peluqueria.com',
+                    correo='admin@example.com',
                     clave=admin.password
                 )
                 

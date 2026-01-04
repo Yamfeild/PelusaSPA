@@ -8,6 +8,7 @@ class EstadoCita(models.TextChoices):
     CONFIRMADA = 'CONFIRMADA', 'Confirmada'
     CANCELADA = 'CANCELADA', 'Cancelada'
     FINALIZADA = 'FINALIZADA', 'Finalizada'
+    NO_ASISTIO = 'NO_ASISTIO', 'No Asistió'
 
 
 class Servicio(models.Model):
@@ -19,6 +20,7 @@ class Servicio(models.Model):
     descripcion = models.TextField(blank=True)
     duracion_minutos = models.IntegerField(help_text="Duración en minutos")
     precio = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio en EUR")
+    imagen_url = models.URLField(blank=True, null=True, help_text="URL de la imagen del servicio (puede ser URL de nube como Google Drive, Cloudinary, etc.)")
     activo = models.BooleanField(default=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
@@ -63,7 +65,18 @@ class Horario(models.Model):
     Un peluquero puede tener múltiples horarios (días de la semana).
     """
     peluquero_id = models.IntegerField(help_text="ID del peluquero desde usuario_service")
-    dia = models.CharField(max_length=20, help_text="Día de la semana (ej: Lunes, Martes)")
+    dia_semana = models.IntegerField(
+        help_text="Día de la semana: 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo",
+        choices=[
+            (0, 'Lunes'),
+            (1, 'Martes'),
+            (2, 'Miércoles'),
+            (3, 'Jueves'),
+            (4, 'Viernes'),
+            (5, 'Sábado'),
+            (6, 'Domingo'),
+        ]
+    )
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
     activo = models.BooleanField(default=True)
@@ -71,19 +84,19 @@ class Horario(models.Model):
     class Meta:
         verbose_name = "Horario"
         verbose_name_plural = "Horarios"
-        ordering = ['peluquero_id', 'dia', 'hora_inicio']
+        ordering = ['peluquero_id', 'dia_semana', 'hora_inicio']
     
     def __str__(self):
-        return f"Peluquero {self.peluquero_id} - {self.dia}: {self.hora_inicio}-{self.hora_fin}"
+        dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+        dia_nombre = dias[self.dia_semana] if 0 <= self.dia_semana < 7 else f"Día {self.dia_semana}"
+        return f"Peluquero {self.peluquero_id} - {dia_nombre}: {self.hora_inicio}-{self.hora_fin}"
     
     def clean(self):
         """Validar que hora_fin sea mayor que hora_inicio."""
         if self.hora_inicio >= self.hora_fin:
             raise ValidationError("La hora de fin debe ser posterior a la hora de inicio")
-    
-    def es_dia_laboral(self, dia_nombre: str) -> bool:
-        """Verifica si el día corresponde a este horario."""
-        return self.dia.lower() == dia_nombre.lower() and self.activo
+        if not (0 <= self.dia_semana <= 6):
+            raise ValidationError("El día de la semana debe estar entre 0 (Lunes) y 6 (Domingo)")
 
 
 class Cita(models.Model):
@@ -92,6 +105,7 @@ class Cita(models.Model):
     Se valida contra la disponibilidad del Horario del peluquero.
     """
     mascota = models.ForeignKey(Mascota, on_delete=models.CASCADE, related_name='citas')
+    servicio = models.ForeignKey(Servicio, on_delete=models.CASCADE, related_name='citas', null=True, blank=True)
     peluquero_id = models.IntegerField(help_text="ID del peluquero desde usuario_service")
     fecha = models.DateField()
     hora_inicio = models.TimeField()
@@ -177,5 +191,14 @@ class Cita(models.Model):
         if self.estado not in [EstadoCita.CONFIRMADA, EstadoCita.PENDIENTE]:
             raise ValidationError("Estado inválido para finalizar")
         self.estado = EstadoCita.FINALIZADA
+        self.save(update_fields=['estado', 'actualizada_en'])
+    
+    def marcar_no_asistio(self):
+        """Marca que el cliente no asistió a la cita."""
+        if self.estado in [EstadoCita.CANCELADA, EstadoCita.NO_ASISTIO]:
+            raise ValidationError(f"La cita ya está en estado {self.estado}")
+        if self.estado == EstadoCita.FINALIZADA:
+            raise ValidationError("No se puede marcar como no asistió una cita finalizada")
+        self.estado = EstadoCita.NO_ASISTIO
         self.save(update_fields=['estado', 'actualizada_en'])
 

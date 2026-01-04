@@ -2,4 +2,6 @@
 export * from './authService';
 export * from './mascotasService';
 export * from './citasService';
+export * from './adminService';
 export * from './api';
+export * from './imageUploadService';

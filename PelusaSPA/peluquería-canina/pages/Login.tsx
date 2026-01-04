@@ -27,7 +27,17 @@ const Login: React.FC = () => {
     try {
       // El backend espera 'usuario' (puede ser email o username) y 'clave'
       await login({ usuario: email, clave: password });
-      navigate('/dashboard');
+
+      // Redirigir según rol
+      const storedUser = localStorage.getItem('user');
+      const user = storedUser ? JSON.parse(storedUser) : null;
+      if (user?.rol === 'ADMIN') {
+        navigate('/admin', { replace: true });
+      } else if (user?.rol === 'PELUQUERO') {
+        navigate('/peluquero', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
     } finally {
@@ -64,7 +74,7 @@ const Login: React.FC = () => {
         fecha_nacimiento: fechaNacimiento,
         telefono
       });
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       setError(err.message || 'Error al registrarse');
     } finally {
@@ -113,13 +123,13 @@ const Login: React.FC = () => {
             {activeTab === 'login' ? (
               <form className="flex flex-col gap-4" onSubmit={handleLogin}>
                 <label className="flex flex-col">
-                    <p className="pb-2 text-base font-medium leading-normal text-text-light dark:text-text-dark">Correo electrónico</p>
+                    <p className="pb-2 text-base font-medium leading-normal text-text-light dark:text-text-dark">Usuario o Email</p>
                     <input 
                         required
-                        type="email" 
+                        type="text" 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="nombre@email.com" 
+                        placeholder="Tu usuario o correo electrónico" 
                         className="flex h-14 w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark p-[15px] text-text-light dark:text-text-dark placeholder:text-subtext-light focus:border-primary focus:ring-primary/50 outline-none"
                     />
                 </label>

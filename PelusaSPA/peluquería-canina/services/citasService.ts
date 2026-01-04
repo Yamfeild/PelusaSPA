@@ -4,13 +4,15 @@ export interface Cita {
   id: number;
   mascota: number;
   mascota_nombre?: string;
+  servicio?: number;
+  servicio_nombre?: string;
   cliente_id?: number;
   peluquero_id: number;
   peluquero_nombre?: string;
   fecha: string;
   hora_inicio: string;
   hora_fin: string;
-  estado: 'PENDIENTE' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA';
+  estado: 'PENDIENTE' | 'CONFIRMADA' | 'FINALIZADA' | 'CANCELADA' | 'NO_ASISTIO';
   estado_display?: string;
   notas?: string;
   creada_en?: string;
@@ -19,12 +21,21 @@ export interface Cita {
 
 export interface CitaCreate {
   mascota_id: number;
-  servicio: string;
+  servicio: number;
   peluquero_id: number;
   fecha: string;
   hora_inicio: string;
   hora_fin: string;
   notas?: string;
+}
+
+export interface Servicio {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  duracion_minutos: number;
+  precio: number;
+  activo: boolean;
 }
 
 export interface Horario {
@@ -53,12 +64,12 @@ export const citasService = {
 
   // Crear una nueva cita
   async createCita(data: CitaCreate): Promise<Cita> {
-    // El backend espera 'mascota' en lugar de 'mascota_id'
+    // El backend espera 'mascota' en lugar de 'mascota_id' y 'servicio' como ID
     const { mascota_id, servicio, ...rest } = data;
     const payload = {
       mascota: mascota_id,
-      ...rest,
-      notas: data.notas || `Servicio: ${servicio}`
+      servicio: servicio,
+      ...rest
     };
     const response = await citasApi.post('/citas/', payload);
     return response.data;
@@ -67,6 +78,18 @@ export const citasService = {
   // Cancelar una cita
   async cancelarCita(id: number): Promise<Cita> {
     const response = await citasApi.post(`/citas/${id}/cancelar/`);
+    return response.data;
+  },
+
+  // Confirmar una cita (solo peluquero)
+  async confirmarCita(id: number): Promise<Cita> {
+    const response = await citasApi.post(`/citas/${id}/confirmar/`);
+    return response.data;
+  },
+
+  // Marcar que el cliente no asistió (solo peluquero)
+  async marcarNoAsistio(id: number): Promise<Cita> {
+    const response = await citasApi.post(`/citas/${id}/marcar_no_asistio/`);
     return response.data;
   },
 
@@ -88,6 +111,20 @@ export const citasService = {
     const response = await citasApi.get(`/citas/slots_disponibles/`, {
       params: { peluquero_id: peluqueroId, fecha }
     });
+    return response.data;
+  },
+
+  // Obtener citas de un peluquero en una fecha específica
+  async getCitasPorFecha(peluqueroId: number, fecha: string): Promise<Cita[]> {
+    const response = await citasApi.get('/citas/', {
+      params: { peluquero_id: peluqueroId, fecha }
+    });
+    return response.data;
+  },
+
+  // Obtener todos los servicios disponibles
+  async getServicios(): Promise<Servicio[]> {
+    const response = await citasApi.get('/servicios/');
     return response.data;
   }
 };
