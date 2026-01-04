@@ -1,0 +1,5 @@
+{
+  "name": "Peluquería Canina",
+  "description": "Aplicación web para gestión de citas de peluquería canina, registro de mascotas y visualización de servicios.",
+  "requestFramePermissions": []
+}

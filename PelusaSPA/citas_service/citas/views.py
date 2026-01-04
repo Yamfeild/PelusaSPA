@@ -3,13 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.exceptions import ValidationError
-from .models import Cita, Horario, Mascota, EstadoCita
+from .models import Cita, Horario, Mascota, EstadoCita, Servicio
 from .serializers import (
     CitaSerializer,
     CitaCreateSerializer,
     CitaDetailSerializer,
     HorarioSerializer,
-    MascotaSerializer
+    MascotaSerializer,
+    ServicioSerializer
 )
 
 
@@ -37,6 +38,36 @@ class IsPeluquero(IsAuthenticated):
         if not super().has_permission(request, view):
             return False
         return hasattr(request.user, 'rol') and request.user.rol == 'PELUQUERO'
+
+
+class ServicioViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar servicios.
+    - GET: Acceso público (lista servicios activos)
+    - POST/PUT/PATCH/DELETE: Solo ADMIN
+    """
+    queryset = Servicio.objects.all()
+    serializer_class = ServicioSerializer
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAdmin()]
+    
+    def get_queryset(self):
+        # Verificar si el usuario es admin autenticado
+        is_admin = (
+            self.request.user.is_authenticated and 
+            hasattr(self.request.user, 'rol') and 
+            self.request.user.rol == 'ADMIN'
+        )
+        
+        # Para admin, mostrar todos los servicios
+        if is_admin:
+            return Servicio.objects.all().order_by('-actualizado_en')
+        
+        # Para público (no autenticado) y otros roles, solo mostrar activos
+        return Servicio.objects.filter(activo=True).order_by('nombre')
 
 
 class MascotaViewSet(viewsets.ModelViewSet):
@@ -88,7 +119,12 @@ class HorarioViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Filtrar horarios según consulta."""
-        queryset = Horario.objects.filter(activo=True)
+        # Si es ADMIN, mostrar todos los horarios (activos e inactivos)
+        if self.request.user and hasattr(self.request.user, 'rol') and self.request.user.rol == 'ADMIN':
+            queryset = Horario.objects.all()
+        else:
+            # Para otros usuarios, solo activos
+            queryset = Horario.objects.filter(activo=True)
         
         # Filtrar por peluquero_id si se pasa como query param
         peluquero_id = self.request.query_params.get('peluquero_id')
@@ -194,9 +230,34 @@ class CitaViewSet(viewsets.ModelViewSet):
         """
         Al crear cita, validar que el cliente solo pueda agendar para sus propias mascotas.
         """
-        if not hasattr(self.request.user, 'rol') or self.request.user.rol != 'CLIENTE':
-            raise ValidationError("Solo los clientes pueden agendar citas")
+        # DEBUG: Imprimir información del request
+        print("=" * 60)
+        print("🔍 DEBUG - perform_create CitaViewSet")
+        print(f"📨 Request user: {self.request.user}")
+        print(f"🔐 Is authenticated: {self.request.user.is_authenticated}")
+        print(f"👤 User type: {type(self.request.user)}")
+        print(f"📋 Has 'rol' attr: {hasattr(self.request.user, 'rol')}")
+        if hasattr(self.request.user, 'rol'):
+            print(f"🎭 Rol value: '{self.request.user.rol}'")
+        if hasattr(self.request.user, '__dict__'):
+            print(f"📦 User attrs: {self.request.user.__dict__}")
+        print("=" * 60)
         
+        # Verificar que el usuario está autenticado
+        if not self.request.user.is_authenticated:
+            print("❌ Usuario NO autenticado")
+            raise ValidationError("Debes estar autenticado para agendar una cita")
+        
+        # Verificar que el usuario es cliente
+        if not hasattr(self.request.user, 'rol'):
+            print("❌ Usuario NO tiene atributo 'rol'")
+            raise ValidationError("El usuario no tiene rol asignado. Contacta al administrador.")
+        
+        if self.request.user.rol != 'CLIENTE':
+            print(f"❌ Rol incorrecto: '{self.request.user.rol}' (esperado: 'CLIENTE')")
+            raise ValidationError(f"Solo los clientes pueden agendar citas. Tu rol es: {self.request.user.rol}")
+        
+        print("✅ Validación de rol exitosa - Usuario es CLIENTE")
         serializer.save()
     
     @action(detail=True, methods=['post'], permission_classes=[IsPeluquero])
@@ -246,6 +307,60 @@ class CitaViewSet(viewsets.ModelViewSet):
             return Response(
                 {"message": "Cita confirmada exitosamente"},
                 status=status.HTTP_200_OK
+            )
+        except ValidationError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reagendar(self, request, pk=None):
+        """
+        Reagendar una cita a una nueva fecha y hora.
+        El cliente puede reagendar sus propias citas.
+        """
+        cita = self.get_object()
+        
+        # Validar que sea el dueño de la mascota o admin
+        if request.user.rol == 'CLIENTE' and cita.mascota.dueno_id != request.user.id:
+            return Response(
+                {"error": "No tienes permiso para reagendar esta cita"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Validar que la cita esté en estado PENDIENTE
+        if cita.estado not in [EstadoCita.PENDIENTE]:
+            return Response(
+                {"error": "Solo se pueden reagendar citas en estado PENDIENTE"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Obtener nueva fecha y hora
+        fecha = request.data.get('fecha')
+        hora_inicio = request.data.get('hora_inicio')
+        hora_fin = request.data.get('hora_fin')
+        
+        if not fecha or not hora_inicio or not hora_fin:
+            return Response(
+                {"error": "Debe proporcionar fecha, hora_inicio y hora_fin"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Actualizar la cita
+        try:
+            from datetime import datetime
+            cita.fecha = datetime.strptime(fecha, '%Y-%m-%d').date()
+            cita.hora_inicio = datetime.strptime(hora_inicio, '%H:%M').time()
+            cita.hora_fin = datetime.strptime(hora_fin, '%H:%M').time()
+            cita.save()
+            
+            serializer = self.get_serializer(cita)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(
+                {"error": f"Formato de fecha u hora inválido: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
             )
         except ValidationError as e:
             return Response(

@@ -12,8 +12,8 @@ class CitaAdmin(admin.ModelAdmin):
 
 @admin.register(Horario)
 class HorarioAdmin(admin.ModelAdmin):
-    list_display = ('id', 'peluquero_id', 'dia', 'hora_inicio', 'hora_fin', 'activo')
-    list_filter = ('dia', 'activo')
+    list_display = ('id', 'peluquero_id', 'dia_semana', 'hora_inicio', 'hora_fin', 'activo')
+    list_filter = ('dia_semana', 'activo')
     search_fields = ('peluquero_id',)
-    ordering = ('peluquero_id', 'dia', 'hora_inicio')
+    ordering = ('peluquero_id', 'dia_semana', 'hora_inicio')
 

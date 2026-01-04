@@ -100,7 +100,7 @@ class RegistroSerializer(serializers.Serializer):
             email=correo,
             password=clave,
             rol=rol,
-            identificacion=validated_data.get('identificacion', '')
+            identificacion=validated_data.get('identificacion') or None
         )
         
         # Crear Cuenta
@@ -187,15 +187,21 @@ class LoginSerializer(serializers.Serializer):
                 pass
         
         if user is None:
-            raise serializers.ValidationError({"usuario": "Credenciales inválidas"})
+            raise serializers.ValidationError({
+                "error": f"No existe ningún usuario con el identificador '{usuario}'. Verifica el email o nombre de usuario."
+            })
         
         # Verificar contraseña
         if not user.check_password(clave):
-            raise serializers.ValidationError({"clave": "Credenciales inválidas"})
+            raise serializers.ValidationError({
+                "error": f"La contraseña es incorrecta para el usuario '{user.username}'. Intenta de nuevo."
+            })
         
         # Verificar que el usuario esté activo
         if not user.is_active:
-            raise serializers.ValidationError({"usuario": "Esta cuenta está desactivada"})
+            raise serializers.ValidationError({
+                "error": f"La cuenta '{user.username}' está desactivada. Contacta al administrador."
+            })
         
         attrs['user'] = user
         return attrs

@@ -1,8 +1,17 @@
 from rest_framework import serializers
-from .models import Cita, Horario, Mascota, EstadoCita
+from .models import Cita, Horario, Mascota, EstadoCita, Servicio
 from datetime import datetime, timedelta
 import requests
 from django.conf import settings
+
+
+class ServicioSerializer(serializers.ModelSerializer):
+    """Serializer para servicios de peluquería."""
+    
+    class Meta:
+        model = Servicio
+        fields = ['id', 'nombre', 'descripcion', 'duracion_minutos', 'precio', 'imagen_url', 'activo', 'creado_en', 'actualizado_en']
+        read_only_fields = ['creado_en', 'actualizado_en']
 
 
 class MascotaSerializer(serializers.ModelSerializer):
@@ -26,7 +35,7 @@ class HorarioSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Horario
-        fields = ['id', 'peluquero_id', 'dia', 'hora_inicio', 'hora_fin', 'activo']
+        fields = ['id', 'peluquero_id', 'dia_semana', 'hora_inicio', 'hora_fin', 'activo']
     
     def validate(self, attrs):
         # Validar que hora_fin sea mayor que hora_inicio
@@ -35,6 +44,14 @@ class HorarioSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "hora_fin": "La hora de fin debe ser posterior a la hora de inicio"
                 })
+        
+        # Validar que dia_semana esté entre 0 y 6
+        if 'dia_semana' in attrs:
+            if not (0 <= attrs['dia_semana'] <= 6):
+                raise serializers.ValidationError({
+                    "dia_semana": "El día de la semana debe estar entre 0 (Lunes) y 6 (Domingo)"
+                })
+        
         return attrs
 
 
@@ -46,11 +63,12 @@ class CitaSerializer(serializers.ModelSerializer):
     # en el microservicio usuario_service. Así evitamos dependencias fuertes entre BDs.
     cliente_id = serializers.IntegerField(source='mascota.dueno_id', read_only=True)
     mascota_nombre = serializers.CharField(source='mascota.nombre', read_only=True)
+    servicio_nombre = serializers.CharField(source='servicio.nombre', read_only=True, allow_null=True)
     
     class Meta:
         model = Cita
         fields = [
-            'id', 'mascota', 'mascota_nombre', 'cliente_id', 'peluquero_id', 'fecha', 
+            'id', 'mascota', 'mascota_nombre', 'servicio', 'servicio_nombre', 'cliente_id', 'peluquero_id', 'fecha', 
             'hora_inicio', 'hora_fin', 'estado', 'estado_display',
             'notas', 'creada_en', 'actualizada_en'
         ]
@@ -66,7 +84,7 @@ class CitaCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cita
         fields = [
-            'mascota', 'peluquero_id', 'fecha', 
+            'mascota', 'servicio', 'peluquero_id', 'fecha', 
             'hora_inicio', 'hora_fin', 'notas'
         ]
     
@@ -76,6 +94,12 @@ class CitaCreateSerializer(serializers.ModelSerializer):
         if request and hasattr(request.user, 'id'):
             if value.dueno_id != request.user.id:
                 raise serializers.ValidationError("La mascota no pertenece a este cliente")
+        return value
+    
+    def validate_servicio(self, value):
+        """Validar que el servicio existe y está activo."""
+        if value and not value.activo:
+            raise serializers.ValidationError("El servicio no está disponible")
         return value
     
     def validate_peluquero_id(self, value):
@@ -111,6 +135,11 @@ class CitaCreateSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         """Validaciones adicionales de negocio."""
+        # Debug logging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"CitaCreateSerializer.validate() - attrs received: {attrs}")
+        
         hora_inicio = attrs.get('hora_inicio')
         hora_fin = attrs.get('hora_fin')
         fecha = attrs.get('fecha')
@@ -123,11 +152,11 @@ class CitaCreateSerializer(serializers.ModelSerializer):
                 "hora_fin": "La hora de fin debe ser posterior a la hora de inicio"
             })
         
-        # Validar duración mínima (1 hora)
+        # Validar duración mínima (30 minutos en lugar de 1 hora)
         duracion = datetime.combine(datetime.today(), hora_fin) - datetime.combine(datetime.today(), hora_inicio)
-        if duracion < timedelta(hours=1):
+        if duracion < timedelta(minutes=30):
             raise serializers.ValidationError({
-                "hora_fin": "La cita debe durar al menos 1 hora"
+                "hora_fin": "La cita debe durar al menos 30 minutos"
             })
         
         # Validar disponibilidad del peluquero en ese horario
@@ -139,29 +168,30 @@ class CitaCreateSerializer(serializers.ModelSerializer):
             }
             dia_es = dias_es.get(dia_nombre, dia_nombre)
             
-            # Buscar horario del peluquero para ese día
-            horarios = Horario.objects.filter(
-                peluquero_id=peluquero_id,
-                dia=dia_es,
-                activo=True
-            )
-            
-            if not horarios.exists():
-                raise serializers.ValidationError({
-                    "fecha": f"El peluquero no trabaja los {dia_es}"
-                })
-            
-            # Validar que la hora esté dentro del horario laboral
-            horario_valido = False
-            for horario in horarios:
-                if horario.hora_inicio <= hora_inicio and hora_fin <= horario.hora_fin:
-                    horario_valido = True
-                    break
-            
-            if not horario_valido:
-                raise serializers.ValidationError({
-                    "hora_inicio": "La hora solicitada no está dentro del horario laboral del peluquero"
-                })
+            # TODO: Descomentar validación de horarios cuando estén configurados
+            # # Buscar horario del peluquero para ese día
+            # horarios = Horario.objects.filter(
+            #     peluquero_id=peluquero_id,
+            #     dia=dia_es,
+            #     activo=True
+            # )
+            # 
+            # if not horarios.exists():
+            #     raise serializers.ValidationError({
+            #         "fecha": f"El peluquero no trabaja los {dia_es}"
+            #     })
+            # 
+            # # Validar que la hora esté dentro del horario laboral
+            # horario_valido = False
+            # for horario in horarios:
+            #     if horario.hora_inicio <= hora_inicio and hora_fin <= horario.hora_fin:
+            #         horario_valido = True
+            #         break
+            # 
+            # if not horario_valido:
+            #     raise serializers.ValidationError({
+            #         "hora_inicio": "La hora solicitada no está dentro del horario laboral del peluquero"
+            #     })
             
             # Validar que no haya conflicto con otras citas confirmadas
             citas_conflicto = Cita.objects.filter(
@@ -198,13 +228,14 @@ class CitaDetailSerializer(serializers.ModelSerializer):
     """
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)
     mascota_info = MascotaSerializer(source='mascota', read_only=True)
+    servicio_info = ServicioSerializer(source='servicio', read_only=True, allow_null=True)
     cliente_id = serializers.IntegerField(source='mascota.dueno_id', read_only=True)
     peluquero_info = serializers.SerializerMethodField()
     
     class Meta:
         model = Cita
         fields = [
-            'id', 'mascota', 'mascota_info', 'cliente_id', 'peluquero_id', 'fecha', 
+            'id', 'mascota', 'mascota_info', 'servicio', 'servicio_info', 'cliente_id', 'peluquero_id', 'fecha', 
             'hora_inicio', 'hora_fin', 'estado', 'estado_display',
             'notas', 'creada_en', 'actualizada_en', 'peluquero_info'
         ]
