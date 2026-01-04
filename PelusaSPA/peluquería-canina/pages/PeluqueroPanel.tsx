@@ -223,26 +223,27 @@ const PeluqueroPanel: React.FC = () => {
   }
 
   return (
+    <div className="min-h-screen bg-white dark:bg-background-dark">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-1">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
           Panel del Peluquero
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-400">
           Bienvenido/a, {user?.nombre || 'Peluquero'}
         </p>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
+      <div className="bg-white dark:bg-card-dark rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-3xl">person</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-bold text-gray-900">{fullName}</span>
-              <span className="text-sm text-gray-600">{displayEmail}</span>
-              <span className="text-sm text-gray-600">{displayPhone}</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">{fullName}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{displayEmail}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{displayPhone}</span>
             </div>
           </div>
           <div className="flex gap-2">
@@ -254,7 +255,7 @@ const PeluqueroPanel: React.FC = () => {
             </button>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               Cerrar sesión
             </button>
@@ -263,19 +264,19 @@ const PeluqueroPanel: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
           {error}
         </div>
       )}
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtros</h2>
+      <div className="bg-white dark:bg-card-dark rounded-lg shadow-sm p-6 mb-6 border border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Filtros</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Filtro por Estado */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Estado de la Cita
             </label>
             <div className="flex gap-2 flex-wrap">
@@ -284,7 +285,7 @@ const PeluqueroPanel: React.FC = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'PENDIENTE'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 Pendientes
@@ -294,7 +295,7 @@ const PeluqueroPanel: React.FC = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'CONFIRMADA'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 Confirmadas
@@ -304,17 +305,17 @@ const PeluqueroPanel: React.FC = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'NO_ASISTIO'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
-                No asistió
+                Completadas
               </button>
               <button
                 onClick={() => setFiltroEstado('CANCELADA')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'CANCELADA'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 Canceladas
@@ -324,7 +325,7 @@ const PeluqueroPanel: React.FC = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'TODAS'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 Todas
@@ -334,7 +335,7 @@ const PeluqueroPanel: React.FC = () => {
 
           {/* Filtro por Fecha */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Período
             </label>
             <div className="flex gap-2 flex-wrap">
@@ -343,7 +344,7 @@ const PeluqueroPanel: React.FC = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroFecha === 'HOY'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 Hoy
@@ -353,7 +354,7 @@ const PeluqueroPanel: React.FC = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroFecha === 'PROXIMOS'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 Próximos
@@ -363,7 +364,7 @@ const PeluqueroPanel: React.FC = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroFecha === 'TODAS'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 Todas
@@ -375,12 +376,12 @@ const PeluqueroPanel: React.FC = () => {
 
       {showEditModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowEditModal(false)}>
-          <div className="bg-white rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-card-dark rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Editar Perfil</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Editar Perfil</h3>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="text-gray-500 hover:text-gray-800"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -388,48 +389,48 @@ const PeluqueroPanel: React.FC = () => {
 
             <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nombre *</label>
                 <input
                   type="text"
                   required
                   value={editForm.nombre}
                   onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 p-3 focus:border-purple-600 focus:ring-purple-200 outline-none"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-purple-600 focus:ring-purple-200 dark:focus:border-purple-500 dark:focus:ring-purple-900/30 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Apellido *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Apellido *</label>
                 <input
                   type="text"
                   required
                   value={editForm.apellido}
                   onChange={(e) => setEditForm({ ...editForm, apellido: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 p-3 focus:border-purple-600 focus:ring-purple-200 outline-none"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-purple-600 focus:ring-purple-200 dark:focus:border-purple-500 dark:focus:ring-purple-900/30 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Teléfono</label>
                 <input
                   type="tel"
                   value={editForm.telefono}
                   onChange={(e) => setEditForm({ ...editForm, telefono: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 p-3 focus:border-purple-600 focus:ring-purple-200 outline-none"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-purple-600 focus:ring-purple-200 dark:focus:border-purple-500 dark:focus:ring-purple-900/30 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dirección</label>
                 <textarea
                   rows={3}
                   value={editForm.direccion}
                   onChange={(e) => setEditForm({ ...editForm, direccion: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 p-3 focus:border-purple-600 focus:ring-purple-200 outline-none resize-none"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-purple-600 focus:ring-purple-200 dark:focus:border-purple-500 dark:focus:ring-purple-900/30 outline-none resize-none"
                 />
               </div>
               <div className="flex gap-3 mt-2">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 h-11 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50"
+                  className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                   Cancelar
                 </button>
@@ -449,19 +450,19 @@ const PeluqueroPanel: React.FC = () => {
       {/* Lista de Citas */}
       <div className="space-y-4">
         {citasFiltradas.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <div className="text-gray-400 mb-2">
+          <div className="bg-white dark:bg-card-dark rounded-lg shadow-sm p-8 text-center">
+            <div className="text-gray-400 dark:text-gray-500 mb-2">
               <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="text-gray-600 font-medium">No hay citas con los filtros seleccionados</p>
+            <p className="text-gray-600 dark:text-gray-400 font-medium">No hay citas con los filtros seleccionados</p>
           </div>
         ) : (
           citasFiltradas.map((cita) => (
             <div
               key={cita.id}
-              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6"
+              className="bg-white dark:bg-card-dark rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-200 dark:border-gray-700"
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 {/* Información de la Cita */}
@@ -470,15 +471,15 @@ const PeluqueroPanel: React.FC = () => {
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${obtenerColorEstado(cita.estado)}`}>
                       {obtenerTextoEstado(cita.estado)}
                     </span>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       Cita #{cita.id}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-gray-600 font-medium mb-1">📅 Fecha y Hora</p>
-                      <p className="text-gray-900">
+                      <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">📅 Fecha y Hora</p>
+                      <p className="text-gray-900 dark:text-white">
                         {new Date(cita.fecha + 'T00:00:00').toLocaleDateString('es-ES', {
                           weekday: 'long',
                           year: 'numeric',
@@ -486,29 +487,29 @@ const PeluqueroPanel: React.FC = () => {
                           day: 'numeric'
                         })}
                       </p>
-                      <p className="text-gray-900 font-semibold">
+                      <p className="text-gray-900 dark:text-white font-semibold">
                         {cita.hora_inicio} - {cita.hora_fin}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-gray-600 font-medium mb-1">🐕 Mascota</p>
-                      <p className="text-gray-900 font-semibold">
+                      <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">🐕 Mascota</p>
+                      <p className="text-gray-900 dark:text-white font-semibold">
                         {cita.mascota_nombre || `Mascota #${cita.mascota}`}
                       </p>
                     </div>
 
                     {cita.servicio_nombre && (
                       <div>
-                        <p className="text-gray-600 font-medium mb-1">✂️ Servicio</p>
-                        <p className="text-gray-900">{cita.servicio_nombre}</p>
+                        <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">✂️ Servicio</p>
+                        <p className="text-gray-900 dark:text-white">{cita.servicio_nombre}</p>
                       </div>
                     )}
 
                     {cita.notas && (
                       <div className="md:col-span-2">
-                        <p className="text-gray-600 font-medium mb-1">📝 Notas</p>
-                        <p className="text-gray-900 italic">{cita.notas}</p>
+                        <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">📝 Notas</p>
+                        <p className="text-gray-900 dark:text-gray-300 italic">{cita.notas}</p>
                       </div>
                     )}
                   </div>
@@ -543,37 +544,38 @@ const PeluqueroPanel: React.FC = () => {
       </div>
 
       {/* Resumen */}
-      <div className="mt-8 bg-purple-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-purple-900 mb-3">Resumen</h3>
+      <div className="mt-8 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800/30">
+        <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-300 mb-3">Resumen</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-purple-600">
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-300">
               {citasFiltradas.filter(c => c.estado === 'PENDIENTE').length}
             </p>
-            <p className="text-sm text-gray-600">Pendientes</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Pendientes</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
               {citasFiltradas.filter(c => c.estado === 'CONFIRMADA').length}
             </p>
-            <p className="text-sm text-gray-600">Confirmadas</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Confirmadas</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-600">
+            <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
               {citasFiltradas.filter(c => c.estado === 'NO_ASISTIO').length}
             </p>
-            <p className="text-sm text-gray-600">No Asistieron</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">No Asistieron</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {citasFiltradas.filter(c => c.estado === 'FINALIZADA').length}
             </p>
-            <p className="text-sm text-gray-600">Finalizadas</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Finalizadas</p>
           </div>
         </div>
       </div>
     </div>
+    </div>
   );
-};
+}
 
 export default PeluqueroPanel;
