@@ -1,35 +1,5 @@
 # 🐕 Sistema de Gestión de Peluquería Canina
 
-## 📋 Índice de Documentación
-
-### 🚀 Para Comenzar
-- **[INICIO_RAPIDO.md](PelusaSPA/INICIO_RAPIDO.md)** - Guía rápida de inicio (3 pasos)
-- **[INTEGRACION_COMPLETA.md](PelusaSPA/INTEGRACION_COMPLETA.md)** - Guía completa del sistema integrado
-- **[CHECKLIST_VERIFICACION.md](PelusaSPA/CHECKLIST_VERIFICACION.md)** - Verificación paso a paso
-
-### 📚 Documentación Técnica
-- **[Frontend](PelusaSPA/peluquería-canina/README_FRONTEND.md)** - Documentación del frontend (React + TypeScript)
-- **[Usuario Service](PelusaSPA/usuario_service/README_AUTH.md)** - API de autenticación y usuarios
-- **[Citas Service](PelusaSPA/citas_service/README_CITAS.md)** - API de citas y mascotas
-- **[Docker](PelusaSPA/DOCKER_GUIDE.md)** - Guía de Docker y deployment
-
-### 📊 Resumen del Proyecto
-- **[RESUMEN_INTEGRACION.md](PelusaSPA/RESUMEN_INTEGRACION.md)** - Resumen ejecutivo de la integración
-
----
-
-## ✨ Estado Actual: ✅ COMPLETADO Y FUNCIONAL
-
-El sistema está completamente integrado con:
-- ✅ Frontend React + TypeScript funcional
-- ✅ Backend con 2 microservicios (Django REST)
-- ✅ Autenticación JWT completa
-- ✅ CRUD de mascotas implementado
-- ✅ Gestión de citas funcional
-- ✅ Sin errores de TypeScript
-- ✅ Documentación completa
-
----
 
 1. Requisitos Funcionales (RF)
 
