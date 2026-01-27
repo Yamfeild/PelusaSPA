@@ -1,0 +1,46 @@
+_format_version: "3.0"
+
+services:
+  # Servicio de Usuarios - Autenticación y perfiles
+  - name: usuario_service
+    url: http://usuario_service:8001
+    routes:
+      - name: auth_route
+        paths:
+          - /api/auth
+        strip_path: false
+        
+      - name: registro_route
+        paths:
+          - /api/registro
+        strip_path: false
+        
+      - name: usuarios_route
+        paths:
+          - /api/usuarios
+        strip_path: false
+
+  # Servicio de Citas - Agendamiento y horarios
+  - name: citas_service
+    url: http://citas_service:8002
+    routes:
+      - name: citas_route
+        paths:
+          - /api/citas
+        strip_path: false
+        
+      - name: horarios_route
+        paths:
+          - /api/horarios
+        strip_path: false
+      
+      - name: mascotas_route
+        paths:
+          - /api/mascotas
+        strip_path: false
+      
+      - name: servicios_route
+        paths:
+          - /api/servicios
+        strip_path: false
+
