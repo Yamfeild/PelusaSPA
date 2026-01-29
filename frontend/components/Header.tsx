@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { citasService } from '../services';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
   const [isDark, setIsDark] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [upcomingCount, setUpcomingCount] = useState(0);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const notificationsRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,12 +34,7 @@ const Header: React.FC = () => {
 
   const goToEditProfile = () => {
     setShowUserMenu(false);
-    const isOnPeluqueroPanel = user?.rol === 'PELUQUERO' && location.pathname.includes('/peluquero');
-    if (isOnPeluqueroPanel) {
-      window.dispatchEvent(new CustomEvent('openPeluqueroProfileEdit'));
-      return;
-    }
-    navigate(`${profilePath}?edit=1`);
+    navigate('/edit-profile');
   };
 
   const handleLogout = () => {
@@ -49,6 +49,27 @@ const Header: React.FC = () => {
     }
   }, []);
 
+  // Cargar citas próximas
+  useEffect(() => {
+    if (isAuthenticated && (user?.rol === 'CLIENTE' || user?.rol === 'PELUQUERO')) {
+      loadUpcomingAppointments();
+      
+      // Recargar cada minuto
+      const interval = setInterval(loadUpcomingAppointments, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, user]);
+
+  const loadUpcomingAppointments = async () => {
+    try {
+      const data = await citasService.getCitasProximas(24);
+      setUpcomingCount(data.count);
+      setUpcomingAppointments(data.citas || []);
+    } catch (error) {
+      console.error('Error cargando citas próximas:', error);
+    }
+  };
+
   useEffect(() => {
     if (!showUserMenu) return;
     const handleClickOutside = (event: MouseEvent) => {
@@ -59,6 +80,18 @@ const Header: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showUserMenu]);
+
+  // Cerrar notificaciones al hacer clic afuera
+  useEffect(() => {
+    if (!showNotifications) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
 
   const toggleTheme = () => {
     if (isDark) {
@@ -96,6 +129,111 @@ const Header: React.FC = () => {
           </nav>
 
           <div className="flex items-center gap-2">
+            {isAuthenticated && (
+              <div className="relative" ref={notificationsRef}>
+                <button 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                    upcomingCount > 0
+                      ? 'text-primary hover:bg-primary/20'
+                      : 'text-subtext-light dark:text-subtext-dark hover:bg-primary/20 hover:text-primary'
+                  }`}
+                  title={upcomingCount > 0 ? `${upcomingCount} cita(s) próxima(s)` : 'Sin notificaciones'}
+                >
+                  <span className="material-symbols-outlined">
+                    {upcomingCount > 0 ? 'notifications_active' : 'notifications_none'}
+                  </span>
+                  {upcomingCount > 0 && (
+                    <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white text-xs font-bold">
+                      {upcomingCount > 9 ? '9+' : upcomingCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Panel de notificaciones */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-card-dark shadow-lg z-50 overflow-hidden">
+                    <div className="bg-primary/10 dark:bg-primary/20 px-4 py-3 border-b border-border-light dark:border-border-dark">
+                      <h3 className="font-semibold text-text-light dark:text-text-dark">
+                        Citas Próximas ({upcomingCount})
+                      </h3>
+                      <p className="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                        Próximas 24 horas
+                      </p>
+                    </div>
+                    
+                    <div className="max-h-96 overflow-y-auto">
+                      {upcomingAppointments && upcomingAppointments.length > 0 ? (
+                        upcomingAppointments.map((cita) => (
+                          <div key={cita.id} className="border-b border-border-light dark:border-border-dark px-4 py-3 hover:bg-background-light dark:hover:bg-background-dark transition-colors">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-primary/20 dark:bg-primary/30 flex items-center justify-center flex-shrink-0">
+                                <span className="material-symbols-outlined text-primary text-lg">pets</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-text-light dark:text-text-dark truncate">
+                                  {cita.mascota_nombre || 'Mascota'}
+                                </p>
+                                <p className="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                                  {cita.notas?.replace('Servicio: ', '') || 'Servicio'}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className="material-symbols-outlined text-xs text-primary">schedule</span>
+                                  <span className="text-xs text-subtext-light dark:text-subtext-dark">
+                                    {(() => {
+                                      const date = new Date(cita.fecha + 'T' + cita.hora_inicio);
+                                      const dateStr = date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+                                      const timeStr = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+                                      return `${dateStr} ${timeStr}`;
+                                    })()}
+                                  </span>
+                                </div>
+                                <span className={`inline-block text-xs font-semibold mt-2 px-2 py-1 rounded ${
+                                  cita.estado === 'CONFIRMADA' 
+                                    ? 'bg-green-500/20 text-green-700 dark:text-green-400'
+                                    : cita.estado === 'PENDIENTE'
+                                    ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                                    : 'bg-gray-500/20 text-gray-700 dark:text-gray-400'
+                                }`}>
+                                  {cita.estado}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-6 text-center text-subtext-light dark:text-subtext-dark">
+                          <p className="text-sm">No hay citas próximas</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-background-light dark:bg-background-dark px-4 py-3 border-t border-border-light dark:border-border-dark flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => {
+                          // Marcar todas como leídas (aquí iría la lógica)
+                          console.log('Marcadas como leídas');
+                        }}
+                        className="flex-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2 px-2 rounded hover:bg-primary/10"
+                        title="Marcar todas como leídas"
+                      >
+                        ✓ Visto
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/notificaciones');
+                          setShowNotifications(false);
+                        }}
+                        className="flex-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2 px-2 rounded hover:bg-primary/10"
+                      >
+                        Ver todo →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <button 
               onClick={toggleTheme}
               className="flex h-10 w-10 items-center justify-center rounded-full text-subtext-light dark:text-subtext-dark hover:bg-primary/20 hover:text-text-light dark:hover:text-text-dark transition-colors"

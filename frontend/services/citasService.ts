@@ -126,5 +126,13 @@ export const citasService = {
   async getServicios(): Promise<Servicio[]> {
     const response = await citasApi.get('/servicios/');
     return response.data;
+  },
+
+  // Obtener citas próximas (para recordatorios)
+  async getCitasProximas(horas: number = 24): Promise<{ count: number; horas_adelante: number; citas: Cita[] }> {
+    const response = await citasApi.get('/citas/proximas/', {
+      params: { horas }
+    });
+    return response.data;
   }
 };

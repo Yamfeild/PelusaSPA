@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { mascotasService, citasService, authService, Mascota, Cita } from '../services';
+import NotificationBanner from '../components/NotificationBanner';
+import { notificationService } from '../services/notificationService';
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
@@ -67,12 +69,40 @@ const Dashboard: React.FC = () => {
       ]);
       setMascotas(mascotasData);
       setCitas(citasData);
+      
+      // Verificar citas próximas y mostrar notificaciones si hay permiso
+      if (notificationService.getPermission() === 'granted') {
+        checkUpcomingAppointments(citasData);
+      }
     } catch (err: any) {
       console.error('Error al cargar datos:', err);
       setError('Error al cargar la información');
     } finally {
       setLoading(false);
     }
+  };
+
+  const checkUpcomingAppointments = (citas: Cita[]) => {
+    const citasProximas = citas.filter(cita => 
+      (cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA') &&
+      notificationService.isAppointmentSoon(cita.fecha, cita.hora_inicio)
+    );
+
+    citasProximas.forEach(cita => {
+      const servicio = cita.notas?.replace('Servicio: ', '') || 'tu servicio';
+      const fecha = new Date(cita.fecha).toLocaleDateString('es-ES', { 
+        day: 'numeric', 
+        month: 'long' 
+      });
+      
+      // Mostrar notificación si está dentro de las próximas 24 horas
+      notificationService.showAppointmentReminder(
+        cita.mascota_nombre || 'tu mascota',
+        servicio,
+        fecha,
+        cita.hora_inicio
+      );
+    });
   };
 
   const fullName = user?.persona
@@ -194,20 +224,11 @@ const Dashboard: React.FC = () => {
                     )}
                 </div>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-                <button 
-                    onClick={() => setShowEditModal(true)}
-                    className="flex h-10 px-4 items-center justify-center rounded-lg bg-primary/20 text-text-light dark:text-text-dark dark:bg-primary/30 font-bold hover:bg-primary/30 transition-colors"
-                >
-                    Editar Perfil
-                </button>
-                <button onClick={handleLogout} className="flex h-10 px-4 items-center justify-center gap-2 rounded-lg bg-red-500/10 text-red-500 dark:bg-red-500/20 dark:text-red-400 font-bold hover:bg-red-500/20 transition-colors">
-                    <span className="material-symbols-outlined">logout</span>
-                    Cerrar Sesión
-                </button>
-            </div>
         </div>
       </div>
+
+      {/* Notification Banner */}
+      <NotificationBanner />
 
       {/* Modal de Editar Perfil */}
       {showEditModal && (
