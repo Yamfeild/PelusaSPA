@@ -147,23 +147,6 @@ class HorarioViewSet(viewsets.ModelViewSet):
         """Solo ADMIN elimina horarios; respuesta clara."""
         return super().destroy(request, *args, **kwargs)
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAdmin])
-    def debug(self, request):
-        """Debug endpoint para revisar todos los horarios guardados."""
-        todos_horarios = Horario.objects.all().order_by('peluquero_id', 'dia_semana')
-        datos = []
-        for h in todos_horarios:
-            datos.append({
-                'id': h.id,
-                'peluquero_id': h.peluquero_id,
-                'dia_semana': h.dia_semana,
-                'dia_nombre': ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][h.dia_semana],
-                'hora_inicio': str(h.hora_inicio),
-                'hora_fin': str(h.hora_fin),
-                'activo': h.activo
-            })
-        return Response(datos)
-
 
 class CitaViewSet(viewsets.ModelViewSet):
     """
