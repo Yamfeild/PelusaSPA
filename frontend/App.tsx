@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import BookAppointment from './pages/BookAppointment';
 import RegisterPet from './pages/RegisterPet';
 import EditPet from './pages/EditPet';
+import EditProfile from './pages/EditProfile';
+import NotificacionesPage from './pages/NotificacionesPage';
 import Services from './pages/Services';
 import Reschedule from './pages/Reschedule';
 import AdminPanel from './pages/AdminPanel';
@@ -101,6 +103,8 @@ const AppRoutes: React.FC = () => {
         
         {/* Rutas protegidas */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+        <Route path="/notificaciones" element={<ProtectedRoute><NotificacionesPage /></ProtectedRoute>} />
         <Route path="/book" element={<ProtectedRoute><BookAppointment /></ProtectedRoute>} />
         <Route path="/book-appointment" element={<ProtectedRoute><BookAppointment /></ProtectedRoute>} />
         <Route path="/register-pet" element={<ProtectedRoute><RegisterPet /></ProtectedRoute>} />

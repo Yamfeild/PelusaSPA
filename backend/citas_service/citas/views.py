@@ -147,6 +147,23 @@ class HorarioViewSet(viewsets.ModelViewSet):
         """Solo ADMIN elimina horarios; respuesta clara."""
         return super().destroy(request, *args, **kwargs)
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAdmin])
+    def debug(self, request):
+        """Debug endpoint para revisar todos los horarios guardados."""
+        todos_horarios = Horario.objects.all().order_by('peluquero_id', 'dia_semana')
+        datos = []
+        for h in todos_horarios:
+            datos.append({
+                'id': h.id,
+                'peluquero_id': h.peluquero_id,
+                'dia_semana': h.dia_semana,
+                'dia_nombre': ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][h.dia_semana],
+                'hora_inicio': str(h.hora_inicio),
+                'hora_fin': str(h.hora_fin),
+                'activo': h.activo
+            })
+        return Response(datos)
+
 
 class CitaViewSet(viewsets.ModelViewSet):
     """
@@ -503,16 +520,15 @@ class CitaViewSet(viewsets.ModelViewSet):
         # Obtener horarios laborales del día
         from datetime import datetime
         fecha_obj = datetime.strptime(fecha, '%Y-%m-%d')
-        dia_nombre = fecha_obj.strftime('%A')
-        dias_es = {
-            'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
-            'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
-        }
-        dia_es = dias_es.get(dia_nombre, dia_nombre)
+        # weekday(): 0=Lunes, 1=Martes, ..., 6=Domingo
+        dia_semana = fecha_obj.weekday()
+        
+        dias_es = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+        dia_es = dias_es[dia_semana]
         
         horarios = Horario.objects.filter(
             peluquero_id=peluquero_id,
-            dia=dia_es,
+            dia_semana=dia_semana,
             activo=True
         ).values('hora_inicio', 'hora_fin')
         
@@ -523,4 +539,61 @@ class CitaViewSet(viewsets.ModelViewSet):
             "horarios_laborales": list(horarios),
             "citas_ocupadas": list(citas_ocupadas)
         })
-
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def proximas(self, request):
+        """
+        Obtener citas próximas que necesitan recordatorio.
+        Devuelve citas pendientes o confirmadas en las próximas 24-48 horas.
+        Query params:
+        - horas: cantidad de horas hacia adelante (default: 24)
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        horas = int(request.query_params.get('horas', 24))
+        now = timezone.localtime()
+        fecha_limite = now + timedelta(hours=horas)
+        
+        # Filtrar citas según el rol del usuario
+        if hasattr(request.user, 'rol'):
+            if request.user.rol == 'CLIENTE':
+                citas = Cita.objects.filter(
+                    mascota__dueno_id=request.user.id,
+                    estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA]
+                ).select_related('mascota')
+            elif request.user.rol == 'PELUQUERO':
+                citas = Cita.objects.filter(
+                    peluquero_id=request.user.id,
+                    estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA]
+                ).select_related('mascota')
+            elif request.user.rol == 'ADMIN':
+                citas = Cita.objects.filter(
+                    estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA]
+                ).select_related('mascota')
+            else:
+                citas = Cita.objects.none()
+        else:
+            citas = Cita.objects.none()
+        
+        # Filtrar por fecha y hora
+        citas_proximas = []
+        for cita in citas:
+            try:
+                from datetime import datetime
+                fecha_hora_cita = datetime.combine(cita.fecha, cita.hora_inicio)
+                fecha_hora_cita = timezone.make_aware(fecha_hora_cita)
+                
+                # La cita está entre ahora y fecha_limite
+                if now <= fecha_hora_cita <= fecha_limite:
+                    citas_proximas.append(cita)
+            except Exception as e:
+                print(f"Error procesando cita {cita.id}: {e}")
+                continue
+        
+        serializer = self.get_serializer(citas_proximas, many=True)
+        return Response({
+            "count": len(citas_proximas),
+            "horas_adelante": horas,
+            "citas": serializer.data
+        })

@@ -246,20 +246,6 @@ const PeluqueroPanel: React.FC = () => {
               <span className="text-sm text-gray-600 dark:text-gray-400">{displayPhone}</span>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
-            >
-              Editar perfil
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              Cerrar sesión
-            </button>
-          </div>
         </div>
       </div>
 

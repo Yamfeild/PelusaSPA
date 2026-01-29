@@ -197,5 +197,32 @@ export const authService = {
     } catch (error: any) {
       throw new Error(getErrorMessage(error));
     }
+  },
+
+  // Cambiar contraseña
+  async changePassword(data: {
+    old_password: string;
+    new_password: string;
+  }): Promise<{ message: string }> {
+    try {
+      const response = await usuariosApi.post('/auth/cambiar-clave/', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  // Subir foto de perfil
+  async uploadPhoto(formData: FormData): Promise<Profile> {
+    try {
+      const response = await usuariosApi.post('/auth/perfil/foto/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(getErrorMessage(error));
+    }
   }
 };
