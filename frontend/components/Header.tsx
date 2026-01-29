@@ -49,9 +49,9 @@ const Header: React.FC = () => {
     }
   }, []);
 
-  // Cargar citas próximas
+  // Cargar citas próximas solo para clientes
   useEffect(() => {
-    if (isAuthenticated && (user?.rol === 'CLIENTE' || user?.rol === 'PELUQUERO')) {
+    if (isAuthenticated && user?.rol === 'CLIENTE') {
       loadUpcomingAppointments();
       
       // Recargar cada minuto
@@ -129,7 +129,8 @@ const Header: React.FC = () => {
           </nav>
 
           <div className="flex items-center gap-2">
-            {isAuthenticated && (
+            {/* Notificaciones solo para clientes */}
+            {isAuthenticated && user?.rol === 'CLIENTE' && (
               <div className="relative" ref={notificationsRef}>
                 <button 
                   onClick={() => setShowNotifications(!showNotifications)}
