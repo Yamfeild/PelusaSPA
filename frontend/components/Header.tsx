@@ -211,8 +211,9 @@ const Header: React.FC = () => {
                     <div className="bg-background-light dark:bg-background-dark px-4 py-3 border-t border-border-light dark:border-border-dark flex items-center justify-between gap-2">
                       <button
                         onClick={() => {
-                          // Marcar todas como leídas (aquí iría la lógica)
-                          console.log('Marcadas como leídas');
+                          setUpcomingAppointments([]);
+                          setUpcomingCount(0);
+                          setShowNotifications(false);
                         }}
                         className="flex-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2 px-2 rounded hover:bg-primary/10"
                         title="Marcar todas como leídas"

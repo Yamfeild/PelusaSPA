@@ -72,21 +72,7 @@ const BookAppointment: React.FC = () => {
       }
 
       try {
-        console.log('📡 Llamando a citasService.getHorarios()...');
         horariosData = await citasService.getHorarios();
-        console.log('✅ Horarios recibidos:', horariosData);
-        
-        // Debug: Mostrar horarios agrupados por peluquero y día
-        const horariosPorPeluquero = horariosData.reduce((acc: any, h: any) => {
-          const key = `Peluquero ${h.peluquero_id}`;
-          if (!acc[key]) acc[key] = {};
-          const diaNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-          const diaNombre = diaNames[h.dia_semana] || `Día ${h.dia_semana}`;
-          if (!acc[key][diaNombre]) acc[key][diaNombre] = [];
-          acc[key][diaNombre].push(`${h.hora_inicio}-${h.hora_fin}`);
-          return acc;
-        }, {});
-        console.log('📊 Horarios agrupados:', horariosPorPeluquero);
       } catch (horariosError: any) {
         console.error('❌ Error al obtener horarios:', horariosError);
       }
@@ -216,7 +202,6 @@ const BookAppointment: React.FC = () => {
   // Función para calcular horarios disponibles y detectar conflictos
   const calculateAvailableHorarios = async () => {
     if (!selectedPeluquero || !selectedDate || !selectedService) {
-      console.log(`⚠️ Falta información: peluquero=${!!selectedPeluquero}, fecha=${!!selectedDate}, servicio=${!!selectedService}`);
       setAvailableHorarios([]);
       return;
     }
@@ -224,14 +209,10 @@ const BookAppointment: React.FC = () => {
     setLoadingHorarios(true);
 
     try {
-      console.log(`\n📅 CALCULANDO HORARIOS DISPONIBLES:`);
-      console.log(`   selectedDate raw = "${selectedDate}"`);
-      
       // Obtener día de la semana (0=Lunes, 6=Domingo)
       // ⚠️ IMPORTANTE: new Date(string) interpreta como UTC, necesitamos fecha local
       const [year, month, day] = selectedDate.split('-').map(Number);
       const selectedDateObj = new Date(year, month - 1, day); // month -1 porque Date usa 0-11
-      console.log(`   Fecha construida correctamente (local timezone): ${selectedDateObj.toString()}`);
       
       const todayMidnight = new Date();
       todayMidnight.setHours(0, 0, 0, 0);
@@ -252,26 +233,10 @@ const BookAppointment: React.FC = () => {
         h.activo
       );
 
-      console.log(`🔍 Buscando horarios:`);
-      console.log(`   - Peluquero ID: ${selectedPeluquero}`);
-      console.log(`   - Día de la semana (JS): ${dayOfWeek}`);
-      console.log(`   - Día de la semana (ajustado): ${dayOfWeekAdjusted}`);
-      console.log(`   - Todos los horarios disponibles:`, horarios.map(h => ({
-        id: h.id,
-        peluquero_id: h.peluquero_id,
-        dia_semana: h.dia_semana,
-        activo: h.activo,
-        horario: `${h.hora_inicio}-${h.hora_fin}`
-      })));
-      console.log(`   - Horarios del peluquero: ${peluqueroHorarios.length}`, peluqueroHorarios);
-
       if (peluqueroHorarios.length === 0) {
-        console.log(`🔍 Sin horarios para peluquero ${selectedPeluquero} en día ${dayOfWeekAdjusted}`);
         setAvailableHorarios([]);
         return;
       }
-
-      console.log(`✅ Encontrados ${peluqueroHorarios.length} horarios para peluquero ${selectedPeluquero} en día ${dayOfWeekAdjusted}:`, peluqueroHorarios);
 
       // Obtener citas existentes para esta fecha y peluquero
       let citasExistentes = [];
@@ -371,7 +336,6 @@ const BookAppointment: React.FC = () => {
 
   // Recalcular horarios cuando cambien peluquero, fecha o servicio
   useEffect(() => {
-    console.log(`🔄 Efecto disparado: selectedPeluquero=${selectedPeluquero}, selectedDate=${selectedDate}, selectedService=${selectedService?.id}`);
     calculateAvailableHorarios();
   }, [selectedPeluquero, selectedDate, selectedService, horarios]);
 
