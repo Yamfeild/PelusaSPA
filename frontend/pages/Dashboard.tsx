@@ -30,6 +30,10 @@ const Dashboard: React.FC = () => {
       return;
     }
     loadData();
+    
+    // Recargar citas cada 30 segundos para actualizar estados automáticamente
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
   }, [user, navigate]);
 
   useEffect(() => {
@@ -327,7 +331,16 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Appointments Section */}
           <div className="w-full lg:w-2/3 flex flex-col">
-              <h2 className="text-2xl font-bold mb-4 text-text-light dark:text-text-dark">Mis Citas</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-text-light dark:text-text-dark">Mis Citas</h2>
+                <Link 
+                  to="/book"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-text-light text-sm font-bold hover:bg-opacity-90"
+                >
+                  <span className="material-symbols-outlined">add</span>
+                  Reservar Cita
+                </Link>
+              </div>
               <div className="flex border-b border-border-light dark:border-border-dark gap-8 mb-6">
                   <button 
                       onClick={() => setActiveTab('upcoming')}

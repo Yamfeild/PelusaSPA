@@ -207,17 +207,16 @@ class CitaCreateSerializer(serializers.ModelSerializer):
                     })
 
         # Regla: una misma mascota no puede tener más de una cita (pendiente o confirmada) en el MISMO horario con el MISMO peluquero
-        # Pero SÍ puede tener múltiples citas con diferentes peluqueros en el mismo día
-        if fecha and mascota and peluquero_id:
-            existe_cita_conflicto = Cita.objects.filter(
+        # Una mascota no puede tener más de una cita en la misma fecha, independientemente del peluquero
+        if fecha and mascota:
+            existe_cita_misma_fecha = Cita.objects.filter(
                 mascota=mascota,
-                peluquero_id=peluquero_id,
                 fecha=fecha,
                 estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA]
             ).exclude(pk=self.instance.pk if self.instance else None).exists()
-            if existe_cita_conflicto:
+            if existe_cita_misma_fecha:
                 raise serializers.ValidationError({
-                    "fecha": f"La mascota ya tiene una cita con este peluquero para este día"
+                    "fecha": f"La mascota ya tiene una cita programada para esta fecha"
                 })
         
         return attrs

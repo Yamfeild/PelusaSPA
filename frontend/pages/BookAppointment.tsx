@@ -72,7 +72,9 @@ const BookAppointment: React.FC = () => {
       }
 
       try {
+        console.log('📡 Llamando a citasService.getHorarios()...');
         horariosData = await citasService.getHorarios();
+        console.log('✅ Horarios recibidos:', horariosData);
       } catch (horariosError: any) {
         console.error('❌ Error al obtener horarios:', horariosError);
       }
@@ -159,7 +161,9 @@ const BookAppointment: React.FC = () => {
         return h * 60 + m;
       };
 
-      const selectedDateObj = new Date(selectedDate);
+      // Parsear fecha correctamente sin desfase de zona horaria
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const selectedDateObj = new Date(year, month - 1, day);
       const dayOfWeek = selectedDateObj.getDay();
       const dayOfWeekAdjusted = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
@@ -175,8 +179,10 @@ const BookAppointment: React.FC = () => {
 
       let hasValidHorario = false;
       for (const horario of peluqueroHorarios) {
+        const horarioStart = timeToMinutes(horario.hora_inicio);
         const horarioEnd = timeToMinutes(horario.hora_fin);
-        if (endTimeMinutes <= horarioEnd) {
+        // Verificar que la hora esté dentro del rango Y que haya suficiente tiempo
+        if (selectedTimeMinutes >= horarioStart && endTimeMinutes <= horarioEnd) {
           hasValidHorario = true;
           break;
         }
@@ -210,10 +216,9 @@ const BookAppointment: React.FC = () => {
 
     try {
       // Obtener día de la semana (0=Lunes, 6=Domingo)
-      // ⚠️ IMPORTANTE: new Date(string) interpreta como UTC, necesitamos fecha local
+      // Parsear fecha correctamente sin desfase de zona horaria
       const [year, month, day] = selectedDate.split('-').map(Number);
-      const selectedDateObj = new Date(year, month - 1, day); // month -1 porque Date usa 0-11
-      
+      const selectedDateObj = new Date(year, month - 1, day);
       const todayMidnight = new Date();
       todayMidnight.setHours(0, 0, 0, 0);
       const dayOfWeek = selectedDateObj.getDay();
@@ -234,9 +239,12 @@ const BookAppointment: React.FC = () => {
       );
 
       if (peluqueroHorarios.length === 0) {
+        console.log(`🔍 Sin horarios para peluquero ${selectedPeluquero} en día ${dayOfWeekAdjusted}`);
         setAvailableHorarios([]);
         return;
       }
+
+      console.log(`✅ Encontrados ${peluqueroHorarios.length} horarios para peluquero ${selectedPeluquero} en día ${dayOfWeekAdjusted}:`, peluqueroHorarios);
 
       // Obtener citas existentes para esta fecha y peluquero
       let citasExistentes = [];
@@ -507,7 +515,7 @@ const BookAppointment: React.FC = () => {
                                     />
                                     <div>
                                         <p className="text-text-light dark:text-text-dark text-base font-bold">{servicio.nombre}</p>
-                                        <p className="text-subtext-light dark:text-subtext-dark text-sm">Duración: {servicio.duracion_minutos} min - ${servicio.precio}</p>
+                                        <p className="text-subtext-light dark:text-subtext-dark text-sm">Duración: {servicio.duracion_minutos} min - €{servicio.precio}</p>
                                         {servicio.descripcion && (
                                           <p className="text-subtext-light dark:text-subtext-dark text-xs mt-1">{servicio.descripcion}</p>
                                         )}
@@ -773,7 +781,7 @@ const BookAppointment: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center text-lg">
                         <span className="font-bold text-text-light dark:text-text-dark">Total</span>
-                        <span className="font-black text-2xl text-text-light dark:text-text-dark">${selectedService?.precio || '0'}</span>
+                        <span className="font-black text-2xl text-text-light dark:text-text-dark">€{selectedService?.precio || '0'}</span>
                     </div>
                     
                     {currentStep === 4 && (

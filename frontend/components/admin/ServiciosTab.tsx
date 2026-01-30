@@ -171,7 +171,7 @@ export const ServiciosTab: React.FC<Props> = ({ setError, setSuccess }) => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {serviciosFiltrados.map(servicio => (
-          <div key={servicio.id} className="bg-white dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm p-6">
+          <div key={servicio.id} className="bg-white dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm p-6 flex flex-col">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
@@ -194,7 +194,7 @@ export const ServiciosTab: React.FC<Props> = ({ setError, setSuccess }) => {
               </p>
             )}
             
-            <div className="space-y-2 mb-4">
+            <div className="space-y-2 mb-4 flex-grow">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-subtext-light dark:text-subtext-dark">
                   <span className="material-symbols-outlined text-base">schedule</span>

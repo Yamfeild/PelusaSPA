@@ -181,29 +181,22 @@ class CitaViewSet(viewsets.ModelViewSet):
         """Filtrar citas según el rol del usuario y auto-finalizar vencidas.
 
         Reglas de auto-finalización:
-        - Si la fecha es anterior a hoy y estado en PENDIENTE/CONFIRMADA => FINALIZADA
-        - Si la fecha es hoy y hora_fin < ahora y estado en PENDIENTE/CONFIRMADA => FINALIZADA
+        - Si la fecha es anterior a hoy => FINALIZADA
+        - Si la fecha es hoy pero ya pasó la hora => No se auto-finaliza (requiere acción manual)
         Nota: Esto se ejecuta en cada listado para mantener consistencia sin tarea programada.
         """
         from django.utils import timezone
         now = timezone.localtime()
 
-        # Citas vencidas por fecha pasada
-        vencidas_fecha = Cita.objects.filter(
+        # Solo marcar como finalizadas las citas de fechas pasadas
+        # Las citas de hoy se dejan al criterio del peluquero
+        vencidas = Cita.objects.filter(
             estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA],
             fecha__lt=now.date()
         )
 
-        # Citas de hoy que ya terminaron
-        vencidas_hoy = Cita.objects.filter(
-            estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA],
-            fecha=now.date(),
-            hora_fin__lt=now.time()
-        )
-
-        # Bulk update si hay alguna
-        if vencidas_fecha.exists() or vencidas_hoy.exists():
-            (vencidas_fecha | vencidas_hoy).update(estado=EstadoCita.FINALIZADA, actualizada_en=now)
+        if vencidas.exists():
+            vencidas.update(estado=EstadoCita.FINALIZADA, actualizada_en=now)
 
         queryset = Cita.objects.all().select_related('mascota').order_by('-fecha', '-hora_inicio')
 
