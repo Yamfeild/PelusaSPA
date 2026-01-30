@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const IP_SERVIDOR = '192.168.1.86'; 
+const IP_SERVIDOR = '172.20.10.10'; 
 
 
 export const authApi = axios.create({ 
