@@ -507,7 +507,7 @@ const BookAppointment: React.FC = () => {
                                     />
                                     <div>
                                         <p className="text-text-light dark:text-text-dark text-base font-bold">{servicio.nombre}</p>
-                                        <p className="text-subtext-light dark:text-subtext-dark text-sm">Duración: {servicio.duracion_minutos} min - €{servicio.precio}</p>
+                                        <p className="text-subtext-light dark:text-subtext-dark text-sm">Duración: {servicio.duracion_minutos} min - ${servicio.precio}</p>
                                         {servicio.descripcion && (
                                           <p className="text-subtext-light dark:text-subtext-dark text-xs mt-1">{servicio.descripcion}</p>
                                         )}
@@ -773,7 +773,7 @@ const BookAppointment: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center text-lg">
                         <span className="font-bold text-text-light dark:text-text-dark">Total</span>
-                        <span className="font-black text-2xl text-text-light dark:text-text-dark">€{selectedService?.precio || '0'}</span>
+                        <span className="font-black text-2xl text-text-light dark:text-text-dark">${selectedService?.precio || '0'}</span>
                     </div>
                     
                     {currentStep === 4 && (
