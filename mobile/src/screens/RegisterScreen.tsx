@@ -6,7 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../constants/theme';
-import { api } from '../api/client';
+import { authApi} from '../api/client';
 
 export const RegisterScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
@@ -36,7 +36,7 @@ export const RegisterScreen = ({ navigation }: any) => {
     }
 
     try {
-      const response = await api.post('/api/auth/registro/', formData);
+      const response = await authApi.post('/api/auth/registro/', formData);
       if (response.status === 201 || response.status === 200) {
         Alert.alert("¡Bienvenido!", "Registro exitoso.");
         navigation.navigate('Login');

@@ -17,7 +17,6 @@ export const PetsListScreen = ({ navigation }: any) => {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Cargar mascotas cuando la pantalla está enfocada
   useFocusEffect(
     React.useCallback(() => {
       loadPets();
@@ -62,32 +61,41 @@ export const PetsListScreen = ({ navigation }: any) => {
 
   const renderPetItem = ({ item }: { item: Pet }) => (
     <View style={styles.petCard}>
-      <View style={styles.petInfo}>
-        <View style={styles.petDetails}>
-          <Text style={styles.petName}>{item.nombre}</Text>
+      {/* 1. Icono circular a la izquierda */}
+      <View style={styles.petIconCircle}>
+        <MaterialIcons name="pets" size={28} color={COLORS.primary} />
+      </View>
+
+      {/* 2. Información central (nombre, raza, edad) */}
+      <View style={styles.petDetailsMain}>
+        <Text style={styles.petName}>{item.nombre}</Text>
+        <View style={styles.breedRow}>
           <Text style={styles.petBreed}>{item.raza}</Text>
+          <Text style={styles.dotSeparator}> • </Text>
           <Text style={styles.petAge}>{item.edad} años</Text>
         </View>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity 
-            style={styles.editButton}
-            onPress={() => navigation.navigate('EditPet', {
-              petId: item.id,
-              petName: item.nombre,
-              petBreed: item.raza,
-              petAge: item.edad
-            })}
-          >
-            <MaterialIcons name="edit" size={18} color="#fff" />
-            <Text style={styles.editButtonText}>Editar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.deleteButton}
-            onPress={() => handleDeletePet(item.id)}
-          >
-            <MaterialIcons name="delete-outline" size={20} color="#ef4444" />
-          </TouchableOpacity>
-        </View>
+      </View>
+
+      {/* 3. Botones de acción a la derecha */}
+      <View style={styles.actionColumn}>
+        <TouchableOpacity 
+          style={styles.deleteButtonSmall}
+          onPress={() => handleDeletePet(item.id)}
+        >
+          <MaterialIcons name="delete-outline" size={20} color="#ef4444" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.editButtonSmall}
+          onPress={() => navigation.navigate('EditPet', {
+            petId: item.id,
+            petName: item.nombre,
+            petBreed: item.raza,
+            petAge: item.edad
+          })}
+        >
+          <MaterialIcons name="edit" size={18} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -164,20 +172,22 @@ const styles = StyleSheet.create({
   },
   listContent: { 
     padding: 20, 
-    paddingBottom: 100 
+    paddingBottom: 120 
   },
   petCard: { 
     backgroundColor: '#fff', 
-    borderRadius: 15, 
+    borderRadius: 20, // Más redondeado como el Home
     padding: 15, 
-    marginBottom: 12,
+    marginBottom: 15,
+    flexDirection: 'row', // Alineación horizontal
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(51, 119, 64, 0.1)',
-    elevation: 3,
+    borderColor: '#f0f2f0',
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5
   },
   petInfo: { 
     gap: 10
@@ -188,17 +198,16 @@ const styles = StyleSheet.create({
   petName: { 
     fontSize: 18, 
     fontWeight: 'bold', 
-    color: '#0e1b12' 
+    color: '#1a1a1a' 
   },
   petBreed: { 
-    fontSize: 13, 
-    color: '#337740', 
+    fontSize: 14, 
+    color: COLORS.primary, 
     fontWeight: '600' 
   },
   petAge: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500'
+    fontSize: 14,
+    color: '#777',
   },
   actionButtons: { 
     flexDirection: 'row', 
@@ -278,5 +287,42 @@ const styles = StyleSheet.create({
     color: '#fff', 
     fontWeight: '600', 
     fontSize: 16 
-  }
+  },
+  petIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.primary + '15', // Fondo verde suave
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  petDetailsMain: {
+    flex: 1, // Ocupa todo el espacio central
+    justifyContent: 'center',
+  },
+  breedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  dotSeparator: {
+    color: '#ccc',
+    marginHorizontal: 4,
+  },
+  actionColumn: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  editButtonSmall: {
+    padding: 8,
+    backgroundColor: COLORS.primary + '10',
+    borderRadius: 10,
+  },
+  deleteButtonSmall: {
+    padding: 8,
+    backgroundColor: '#fee2e2', // Fondo rojo suave
+    borderRadius: 10,
+  },
 });

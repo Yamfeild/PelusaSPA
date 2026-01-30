@@ -10,7 +10,7 @@ export const ProfileScreen = ({ navigation }: any) => {
   const { user, signOut } = useAuth(); 
   const { isDarkMode, toggleTheme } = useTheme();
 
-  // Colores dinámicos
+
   const dynamicColors = {
     bg: isDarkMode ? '#121212' : '#fff',
     text: isDarkMode ? '#fff' : '#000',
@@ -22,7 +22,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: dynamicColors.bg }]}>
-      {/* Header */}
+      
       <View style={[styles.header, { borderBottomColor: dynamicColors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back-ios" size={20} color={dynamicColors.text} />
@@ -32,25 +32,31 @@ export const ProfileScreen = ({ navigation }: any) => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Foto de Perfil */}
+        
         <View style={styles.profileImageSection}>
           <View style={styles.imageWrapper}>
-            <Image 
-              source={{ uri: user?.avatar || 'https://via.placeholder.com/150' }} 
-              style={styles.profileImage} 
-            />
-            <TouchableOpacity style={styles.cameraButton}>
+            {/* Reemplazamos Image por el círculo con inicial */}
+            <View style={styles.profileAvatarPlaceholder}>
+              <Text style={styles.profileAvatarInitial}>
+                {user?.username?.charAt(0).toUpperCase() || 'U'}
+              </Text>
+            </View>
+            {/* Comentamos o eliminamos el botón de cámara si no hay fotos aún */}
+            {/* <TouchableOpacity style={styles.cameraButton}>
               <MaterialIcons name="photo-camera" size={16} color="#fff" />
-            </TouchableOpacity>
+            </TouchableOpacity> 
+            */}
           </View>
-          <Text style={[styles.profileName, { color: dynamicColors.text }]}>{user?.username || 'Usuario'}</Text>
+          <Text style={[styles.profileName, { color: dynamicColors.text }]}>
+            {user?.username || 'Usuario'}
+          </Text>
           <Text style={styles.membershipText}>Cliente</Text>
         </View>
 
-        {/* Información Personal */}
+        
         <Text style={[styles.sectionTitle, { color: dynamicColors.text }]}>Información Personal</Text>
         
-        {/* NOMBRE COMPLETO */}
+      
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: dynamicColors.text }]}>Nombre Completo</Text>
           <View style={[styles.inputContainer, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border }]}>
@@ -63,7 +69,7 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* CORREO ELECTRÓNICO (RECUPERADO) */}
+      
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: dynamicColors.text }]}>Correo Electrónico</Text>
           <View style={[styles.inputContainer, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border }]}>
@@ -76,7 +82,7 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* Seguridad y Preferencias */}
+        
         <Text style={[styles.sectionTitle, { color: dynamicColors.text }]}>Seguridad y Preferencias</Text>
         
         <TouchableOpacity style={[styles.menuItem, { backgroundColor: dynamicColors.card }]}>
@@ -87,7 +93,7 @@ export const ProfileScreen = ({ navigation }: any) => {
           <MaterialIcons name="chevron-right" size={24} color="#aaa" />
         </TouchableOpacity>
 
-        {/* MODO OSCURO */}
+        
         <View style={[styles.menuItem, { backgroundColor: dynamicColors.card }]}>
           <View style={[styles.iconBox, { backgroundColor: '#3377401a' }]}>
             <MaterialIcons name={isDarkMode ? "dark-mode" : "light-mode"} size={20} color={COLORS.primary} />
@@ -100,14 +106,11 @@ export const ProfileScreen = ({ navigation }: any) => {
           />
         </View>
 
-        {/* Botones de Acción (RECUPERADOS) */}
+        
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.saveButton}>
-            <Text style={styles.saveButtonText}>Guardar Cambios</Text>
-          </TouchableOpacity>
-
+          
           <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-            <MaterialIcons name="logout" size={20} color={COLORS.primary} />
+            <MaterialIcons name="logout" size={20} color="#ef4444" />
             <Text style={styles.logoutText}>Cerrar Sesión</Text>
           </TouchableOpacity>
         </View>
@@ -123,7 +126,11 @@ const styles = StyleSheet.create({
   backButton: { padding: 10 },
   scrollContent: { padding: 20 },
   profileImageSection: { alignItems: 'center', marginBottom: 30 },
-  imageWrapper: { position: 'relative', marginBottom: 15 },
+  imageWrapper: { 
+    marginBottom: 15,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   profileImage: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: '#3377401a' },
   cameraButton: { position: 'absolute', bottom: 5, right: 5, backgroundColor: COLORS.primary, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   profileName: { fontSize: 22, fontWeight: 'bold' },
@@ -139,6 +146,40 @@ const styles = StyleSheet.create({
   actionButtons: { marginTop: 30, gap: 15 },
   saveButton: { backgroundColor: COLORS.primary, height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  logoutButton: { flexDirection: 'row', height: 56, borderRadius: 12, borderWidth: 1, borderColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  logoutText: { color: COLORS.primary, fontSize: 16, fontWeight: 'bold' }
+  logoutButton: { 
+    flexDirection: 'row', 
+    height: 56, 
+    borderRadius: 12, 
+    borderWidth: 1, 
+    borderColor: '#ef4444', // Borde rojo (puedes usar COLORS.error si lo tienes)
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    gap: 10,
+    marginTop: 20 // Espacio extra arriba para separarlo de los otros ajustes
+  },
+  logoutText: { 
+    color: '#ef4444', // Texto rojo
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
+  profileAvatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: COLORS.primary + '15', 
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    elevation: 4,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
+  profileAvatarInitial: {
+    fontSize: 50, 
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
 });

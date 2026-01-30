@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../constants/theme';
+import { useFocusEffect } from '@react-navigation/native';
 
-// Importamos los servicios que ya creaste
+
+
 import { mascotasService } from '../services/mascotasService';
 import { citasService, Cita } from '../services/citasService';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
-  
-  // Estados para los datos reales
   const [pets, setPets] = useState<any[]>([]);
   const [citas, setCitas] = useState<Cita[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,9 +34,11 @@ export const HomeScreen = ({ navigation }: any) => {
     }
   };
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     loadData();
-  }, []);
+  }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -53,16 +55,19 @@ export const HomeScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HEADER */}
+ 
       <View style={styles.header}>
         <View style={styles.userInfo}>
-          <Image 
-            source={{ uri: user?.avatar || 'https://via.placeholder.com/150' }} 
-            style={styles.avatar} 
-          />
+          <View style={styles.avatarPlaceholder}>
+          
+          <Text style={styles.avatarInitial}>
+            {user?.username?.charAt(0).toUpperCase() || 'U'}
+          </Text>
+          
+        </View>
           <View>
-            <Text style={styles.welcomeText}>BIENVENIDO,</Text>
-            <Text style={styles.userName}>{user?.first_name || user?.username || 'Usuario'}</Text>
+            <Text style={styles.welcomeText}>BIENVENIDO</Text>
+            <Text style={styles.userName}>{user?.username || 'Usuario'}</Text>
           </View>
         </View>
         <TouchableOpacity style={styles.notifButton}>
@@ -76,7 +81,7 @@ export const HomeScreen = ({ navigation }: any) => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} color={COLORS.primary} />}
       >
         
-        {/* SECCIÓN MIS MASCOTAS REALES */}
+        
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Mis Mascotas</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Mascotas')}>
@@ -86,13 +91,17 @@ export const HomeScreen = ({ navigation }: any) => {
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
           {pets.length === 0 ? (
-            <Text style={styles.emptyText}>No tienes mascotas registradas</Text>
+            <View style={{ padding: 20, alignItems: 'center' }}> 
+              <Text style={styles.emptyText}>No tienes mascotas registradas</Text>
+            </View>
           ) : (
             pets.map((pet) => (
               <View key={pet.id} style={styles.petCard}>
-                <View style={styles.petImageContainer}>
-                   <Image source={{ uri: pet.foto || 'https://via.placeholder.com/100' }} style={styles.petImageInternal} />
+                {/* Contenedor circular con icono en lugar de Image */}
+                <View style={styles.petIconCircle}>
+                  <MaterialIcons name="pets" size={30} color={COLORS.primary} />
                 </View>
+
                 <View>
                   <Text style={styles.petName}>{pet.nombre}</Text>
                   <View style={styles.statusBadge}>
@@ -103,51 +112,55 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             ))
           )}
-        </ScrollView>
+          </ScrollView>
 
-        {/* SECCIÓN CITAS REALES */}
+        
         <Text style={[styles.sectionTitle, { marginHorizontal: 20, marginTop: 25 }]}>Próximas Citas</Text>
         
-        {citas.length === 0 ? (
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <Text style={styles.emptyText}>No tienes citas programadas</Text>
-          </View>
-        ) : (
-          citas.slice(0, 3).map((cita) => (
-            <View key={cita.id} style={styles.appointmentCard}>
-              <View style={styles.cardHeader}>
-                <View style={[styles.badgeAceptada, { backgroundColor: cita.estado === 'pendiente' ? '#FFA500' : COLORS.primary }]}>
-                  <Text style={styles.badgeText}>{cita.estado.toUpperCase()}</Text>
-                </View>
-                <Text style={styles.petLabel}> • {cita.mascota_nombre}</Text>
+        {citas.slice(0, 3).map((cita) => (
+          <View key={cita.id} style={styles.appointmentCard}>
+            <View style={styles.cardHeader}>
+              <View style={[styles.badgeAceptada, { backgroundColor: cita.estado === 'pendiente' ? '#FFA500' : COLORS.primary }]}>
+                <Text style={styles.badgeText}>{cita.estado.toUpperCase()}</Text>
               </View>
-              
-              <View style={styles.cardBody}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.serviceTitle}>{cita.servicio_nombre}</Text>
-                  <View style={styles.infoRow}>
-                    <MaterialIcons name="calendar-today" size={16} color={COLORS.primary} />
-                    <Text style={styles.infoText}>{cita.fecha} • {cita.hora_inicio.substring(0,5)}</Text>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <MaterialIcons name="person" size={16} color={COLORS.primary} />
-                    <Text style={styles.infoText}>Peluquero: {cita.peluquero_nombre}</Text>
-                  </View>
+              <Text style={styles.petLabel}> • {cita.mascota_nombre}</Text>
+            </View>
+            
+            {/* AQUÍ ESTÁ EL TRUCO: El icono entra en el cardBody */}
+            <View style={styles.cardBody}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.serviceTitle}>{cita.servicio_nombre}</Text>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="calendar-today" size={16} color={COLORS.primary} />
+                  <Text style={styles.infoText}>{cita.fecha} • {cita.hora_inicio.substring(0,5)}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="person" size={16} color={COLORS.primary} />
+                  <Text style={styles.infoText}>Peluquero: {cita.peluquero_id}</Text>
                 </View>
               </View>
 
-              <View style={styles.cardFooter}>
-                <TouchableOpacity style={styles.btnDetalles}>
-                  <MaterialIcons name="info-outline" size={18} color={COLORS.primary} />
-                  <Text style={styles.btnTextPrimary}> Detalles</Text>
-                </TouchableOpacity>
+              {/* Este View ahora es hermano del View con flex:1, por eso sale a la derecha */}
+              <View style={styles.serviceIconContainer}>
+                <MaterialIcons 
+                  name={cita.servicio_nombre.toLowerCase().includes('baño') ? 'waves' : 'content-cut'} 
+                  size={28} 
+                  color={COLORS.primary} 
+                />
               </View>
             </View>
-          ))
-        )}
+
+            <View style={styles.cardFooter}>
+              <TouchableOpacity style={styles.btnDetalles}>
+                <MaterialIcons name="info-outline" size={18} color={COLORS.primary} />
+                <Text style={styles.btnTextPrimary}> Editar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
       </ScrollView>
 
-      {/* BOTÓN FLOTANTE RESERVAR */}
+      
       <TouchableOpacity 
         style={styles.fab}
         onPress={() => navigation.navigate('Reservar')} // Asegúrate que el nombre coincida con tu Stack
@@ -159,7 +172,6 @@ export const HomeScreen = ({ navigation }: any) => {
   );
 };
 
-// ... (Los estilos se mantienen igual que antes, solo asegúrate de borrar ringColor)
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
@@ -172,7 +184,22 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 20, fontWeight: 'bold' },
   verTodas: { color: COLORS.primary, fontWeight: 'bold' },
   horizontalScroll: { paddingLeft: 20, marginTop: 15 },
-  petCard: { width: 260, backgroundColor: '#fff', padding: 15, borderRadius: 16, borderWidth: 1, borderColor: '#f0f0f0', flexDirection: 'row', alignItems: 'center', marginRight: 15, elevation: 2 },
+  petCard: { 
+    width: 200, // Un poco más angosta para que se vean varias
+    backgroundColor: '#fff', 
+    padding: 12, 
+    borderRadius: 16, 
+    borderWidth: 1, 
+    borderColor: '#f0f0f0', 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginRight: 15, 
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
   petImageContainer: { width: 70, height: 70, borderRadius: 35, borderWidth: 2, borderColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', marginRight: 15 },
   petImageInternal: { width: 62, height: 62, borderRadius: 31 },
   petName: { fontSize: 16, fontWeight: 'bold' },
@@ -197,5 +224,42 @@ const styles = StyleSheet.create({
   btnTextPrimary: { color: COLORS.primary, fontWeight: 'bold', marginLeft: 5 },
   btnTextWhite: { color: '#fff', fontWeight: 'bold', marginLeft: 5 },
   fab: { position: 'absolute', bottom: 20, right: 20, backgroundColor: COLORS.primary, flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15, borderRadius: 20, alignItems: 'center', elevation: 5 },
-  fabText: { color: '#fff', fontWeight: 'bold', marginLeft: 10 }
+  fabText: { color: '#fff', fontWeight: 'bold', marginLeft: 10 },
+  avatarPlaceholder: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: COLORS.primary + '20', 
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    marginRight: 12, // Espacio entre círculo y texto de bienvenida
+  },
+  avatarInitial: {
+    fontSize: 20, // Bajamos de 30 a 20 para que quepa bien
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  petIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: COLORS.primary + '15', // Verde muy clarito
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 15, // Espacio con el nombre de la mascota
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30', // Borde sutil
+  },
+  serviceIconContainer: {
+  width: 120, // Lo bajé un poco de 60 para que no sea tan grande
+  height: 80,
+  borderRadius: 30,
+  backgroundColor: COLORS.primary + '15',
+  justifyContent: 'center',
+  alignItems: 'center',
+  alignSelf: 'center', // <--- Importante para que se centre verticalmente con el texto
+  marginLeft: 10,
+  },
 });

@@ -14,7 +14,7 @@ export const CreatePetScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
-    // Validar datos
+    
     if (!petData.nombre.trim()) {
       Alert.alert("Error", "El nombre de la mascota es requerido");
       return;

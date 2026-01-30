@@ -7,7 +7,7 @@ const ThemeContext = createContext({
 });
 
 export const ThemeProvider = ({ children }: any) => {
-  const deviceScheme = useColorScheme(); // Detecta el tema del sistema (celular)
+  const deviceScheme = useColorScheme(); 
   const [isDarkMode, setIsDarkMode] = useState(deviceScheme === 'dark');
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);

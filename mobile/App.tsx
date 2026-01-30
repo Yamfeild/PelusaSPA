@@ -93,7 +93,7 @@ const Root = () => {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider> {/* <--- ENVUELVE TODO PARA EL MODO OSCURO */}
+      <ThemeProvider> 
         <AuthProvider>
           <Root />
         </AuthProvider>
