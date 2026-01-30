@@ -62,7 +62,7 @@ export const citasService = {
     }
   },
 
-  // Obtener un servicio específico
+
   async getServicio(id: number): Promise<Servicio> {
     try {
       const response = await citasApi.get(`/api/servicios/${id}/`);
@@ -73,10 +73,10 @@ export const citasService = {
     }
   },
 
-  // Obtener todos los horarios disponibles
+  
   async getHorarios(peluqueroId?: number, fecha?: string): Promise<Horario[]> {
     try {
-      // Construimos los parámetros de búsqueda
+      
       const params: any = {};
       if (peluqueroId) params.peluquero_id = peluqueroId;
       if (fecha) params.fecha = fecha;
@@ -89,7 +89,7 @@ export const citasService = {
     }
   },
 
-  // Obtener horarios de un peluquero específico
+  
   async getHorariosPeluquero(peluqueroId: number): Promise<Horario[]> {
     try {
       const response = await citasApi.get(`/api/horarios/?peluquero_id=${peluqueroId}`);
@@ -100,7 +100,7 @@ export const citasService = {
     }
   },
 
-  // Obtener todas las citas del usuario
+  
   async getCitas(): Promise<Cita[]> {
     try {
       const response = await citasApi.get('/api/citas/');
@@ -111,7 +111,7 @@ export const citasService = {
     }
   },
 
-  // Obtener una cita específica
+ 
   async getCita(id: number): Promise<Cita> {
     try {
       const response = await citasApi.get(`/api/citas/${id}/`);
@@ -122,7 +122,7 @@ export const citasService = {
     }
   },
 
-  // Crear una nueva cita
+  
   async createCita(data: CitaCreate): Promise<Cita> {
     try {
       const response = await citasApi.post('/api/citas/', data);
@@ -133,7 +133,7 @@ export const citasService = {
     }
   },
 
-  // Actualizar una cita
+  
   async updateCita(id: number, data: Partial<CitaCreate>): Promise<Cita> {
     try {
       const response = await citasApi.put(`/api/citas/${id}/`, data);
@@ -144,7 +144,7 @@ export const citasService = {
     }
   },
 
-  // Cancelar una cita
+  
   async cancelarCita(id: number): Promise<Cita> {
     try {
       const response = await citasApi.patch(`/api/citas/${id}/`, {
@@ -157,7 +157,7 @@ export const citasService = {
     }
   },
 
-  // Eliminar una cita
+  
   async deleteCita(id: number): Promise<void> {
     try {
       await citasApi.delete(`/api/citas/${id}/`);

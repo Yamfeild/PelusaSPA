@@ -85,6 +85,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React o frontend local
     "http://127.0.0.1:3000",
     "http://localhost:8080",  # si usas Vue o Docker
+    "http://172.20.10.10:8080"
 ]
 
 CORS_ALLOW_CREDENTIALS = True

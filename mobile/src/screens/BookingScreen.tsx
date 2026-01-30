@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useEffect, useState, useCallback } from 'react'; 
 import {
   View,
   Text,
@@ -25,7 +26,7 @@ interface Pet {
 }
 
 export const BookingScreen = ({ navigation }: any) => {
-  const [step, setStep] = useState(1); // 1: Mascota, 2: Servicio, 3: Peluquero, 4: Fecha/Hora, 5: Confirmación
+  const [step, setStep] = useState(1); 
   const [pets, setPets] = useState<Pet[]>([]);
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [horarios, setHorarios] = useState<Horario[]>([]);
@@ -33,7 +34,6 @@ export const BookingScreen = ({ navigation }: any) => {
   const [citas, setCitas] = useState<Cita[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // State del formulario
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [selectedServicio, setSelectedServicio] = useState<Servicio | null>(null);
   const [selectedPeluquero, setSelectedPeluquero] = useState<Peluquero | null>(null);
@@ -41,9 +41,11 @@ export const BookingScreen = ({ navigation }: any) => {
   const [selectedHora, setSelectedHora] = useState<{ inicio: string; fin: string } | null>(null);
   const [notas, setNotas] = useState('');
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     loadInitialData();
-  }, []);
+  }, [])
+  );
   useEffect(() => {
   if (selectedPeluquero && selectedFecha && step === 4) {
     fetchHorariosDisponibles();
@@ -83,17 +85,14 @@ export const BookingScreen = ({ navigation }: any) => {
   const fetchHorariosDisponibles = async () => {
     setLoading(true);
     try {
-      // 1. Traemos los horarios del peluquero desde el servicio
+    
       const data = await citasService.getHorarios(selectedPeluquero?.id);
       
-      // 2. Calculamos el día de la semana de la fecha seleccionada
-      // JS: 0 (Dom) - 6 (Sab). Django suele ser 0 (Lun) - 6 (Dom)
-      // Ajuste para que 0 sea Lunes:
       const fechaObj = new Date(selectedFecha + 'T00:00:00');
       let dayOfWeek = fechaObj.getDay() - 1; 
-      if (dayOfWeek === -1) dayOfWeek = 6; // Domingo
+      if (dayOfWeek === -1) dayOfWeek = 6;
 
-      // 3. Filtramos los horarios que correspondan a ese día
+
       const horariosFiltrados = data.filter(h => h.dia_semana === dayOfWeek && h.activo);
       
       setHorarios(horariosFiltrados);
@@ -118,9 +117,9 @@ export const BookingScreen = ({ navigation }: any) => {
       return;
       
     }
-    // CORRECCIÓN: Si pasamos del paso 3 al 4, cargamos los horarios
+    
     if (step === 3) {
-      // Si ya hay una fecha seleccionada por defecto, cargamos horarios de una vez
+      
       if (selectedFecha) {
         fetchHorariosDisponibles();
       }
@@ -130,7 +129,7 @@ export const BookingScreen = ({ navigation }: any) => {
       return;
     }
 
-    // Cargar horarios cuando se va al paso 3 (antes de mostrar peluqueros)
+    
     if (step === 2) {
       loadHorarios();
     }
@@ -205,7 +204,7 @@ export const BookingScreen = ({ navigation }: any) => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* PASO 1: Seleccionar Mascota */}
+        
         {step === 1 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Selecciona tu mascota</Text>
@@ -242,7 +241,7 @@ export const BookingScreen = ({ navigation }: any) => {
           </View>
         )}
 
-        {/* PASO 2: Seleccionar Servicio */}
+        
         {step === 2 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Selecciona un servicio</Text>
@@ -272,7 +271,7 @@ export const BookingScreen = ({ navigation }: any) => {
           </View>
         )}
 
-        {/* PASO 3: Seleccionar Peluquero */}
+        
         {step === 3 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Selecciona un peluquero</Text>
@@ -302,12 +301,12 @@ export const BookingScreen = ({ navigation }: any) => {
           </View>
         )}
 
-        {/* PASO 4: Seleccionar Fecha y Hora */}
+        
         {step === 4 && (
         <View style={styles.stepContainer}>
           <Text style={styles.stepTitle}>Selecciona fecha y hora</Text>
           
-          {/* Selector de Fecha Horizontal */}
+          
           <Text style={styles.bookingLabel}>Fecha disponible</Text>
           <ScrollView 
             horizontal 
@@ -328,7 +327,7 @@ export const BookingScreen = ({ navigation }: any) => {
                   style={[styles.dateCard, isSelected && styles.dateCardSelected]}
                   onPress={() => {
                       setSelectedFecha(dateString);
-                      setSelectedHora(null); // Resetear hora al cambiar fecha
+                      setSelectedHora(null); 
                   }}
                 >
                   <Text style={[styles.dateDayName, isSelected && styles.textWhite]}>{dayName}</Text>
@@ -338,7 +337,7 @@ export const BookingScreen = ({ navigation }: any) => {
             })}
           </ScrollView>
 
-          {/* Selector de Horarios en Grid */}
+          
           <Text style={[styles.bookingLabel, { marginTop: 20 }]}>
             Horarios para {selectedPeluquero?.nombre}
           </Text>
@@ -349,7 +348,7 @@ export const BookingScreen = ({ navigation }: any) => {
             ) : (
               horarios.map((item, index) => {
                 const isSelected = selectedHora?.inicio === item.hora_inicio;
-                // USAMOS 'activo' EN LUGAR DE 'disponible'
+                
                 const estaDisponible = item.activo; 
 
                 return (
@@ -388,7 +387,7 @@ export const BookingScreen = ({ navigation }: any) => {
         </View>
       )}
 
-        {/* PASO 5: Confirmación */}
+        
         {step === 5 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Confirma tu reserva</Text>
@@ -419,8 +418,8 @@ export const BookingScreen = ({ navigation }: any) => {
               <View style={styles.confirmDivider} />
               <View style={styles.confirmRow}>
                 <Text style={styles.confirmLabel}>Peluquero:</Text>
-                <View>
-                  <Text style={styles.confirmValue}>{selectedPeluquero?.nombre}</Text>
+                <View style={{ flex: 0.65 }}>
+                  <Text style={[styles.confirmValue, { width: '100%' }]}>{selectedPeluquero?.nombre}</Text>
                   <Text style={styles.confirmSubtext}>{selectedPeluquero?.email}</Text>
                 </View>
               </View>
@@ -438,7 +437,7 @@ export const BookingScreen = ({ navigation }: any) => {
         )}
       </ScrollView>
 
-      {/* Botones de navegación */}
+      
       <View style={styles.footer}>
         {step > 1 && (
           <TouchableOpacity style={styles.buttonSecondary} onPress={handlePrevStep}>

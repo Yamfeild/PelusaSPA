@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   View, Text, TextInput, TouchableOpacity, StyleSheet, 
   SafeAreaView, KeyboardAvoidingView, Platform, StatusBar, Alert
-} from 'react-native'; // Importamos StatusBar
+} from 'react-native'; 
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../constants/theme';
@@ -10,14 +10,14 @@ import { COLORS } from '../constants/theme';
 export const LoginScreen = ({ navigation }: any) => {
   const [usuario, setUsuario] = useState('');
   const [clave, setClave] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Estado para el ojito
+  const [showPassword, setShowPassword] = useState(false);
   const { signIn, signOut } = useAuth();
 
   const handleLogin = async () => {
     try {
       const usuarioAutenticado = await signIn({ usuario, clave });
       
-      // Validamos el rol del usuario
+      
       if (usuarioAutenticado?.rol && usuarioAutenticado.rol !== 'CLIENTE') {
         Alert.alert(
           "Acceso denegado",
@@ -26,7 +26,7 @@ export const LoginScreen = ({ navigation }: any) => {
             {
               text: "OK",
               onPress: () => {
-                // Cerramos la sesión
+                
                 signOut();
               }
             }
@@ -40,11 +40,11 @@ export const LoginScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Ocultamos la barra de notificaciones (batería, hora, etc.) */}
+      
       <StatusBar hidden={true} />
       
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        {/* Header con flecha */}
+        
         <View style={styles.header}>
           <MaterialIcons  size={24} color={COLORS.textMain} />
           <Text style={styles.headerTitle}></Text>
@@ -52,18 +52,18 @@ export const LoginScreen = ({ navigation }: any) => {
         </View>
 
         <View style={styles.content}>
-          {/* Logo circular de la mascota */}
+          
           <View style={styles.logoContainer}>
             <View style={styles.logoCircle}>
               <MaterialIcons name="pets" size={50} color={COLORS.primary} />
             </View>
           </View>
 
-          {/* Bienvenida */}
+          
           <Text style={styles.welcomeTitle}>PelusaSPA</Text>
           <Text style={styles.welcomeSubtitle}>Reserva tu cita con elegancia</Text>
 
-          {/* Formulario */}
+          
           <View style={styles.form}>
             <Text style={styles.label}>Usuario o correo</Text>
             <TextInput 
@@ -82,10 +82,10 @@ export const LoginScreen = ({ navigation }: any) => {
               <TextInput 
                 style={[styles.input, { flex: 1, marginBottom: 0 }]}
                 placeholder="••••••••"
-                secureTextEntry={!showPassword} // Invertimos el estado
+                secureTextEntry={!showPassword} 
                 onChangeText={setClave}
               />
-              {/* Botón del ojito con lógica de toggle */}
+              
               <TouchableOpacity 
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeIcon}
@@ -103,10 +103,10 @@ export const LoginScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
           <TouchableOpacity 
-            onPress={() => navigation.navigate('Register')} // 👈 Esto ya no fallará
-            style={styles.footerText}
+            onPress={() => navigation.navigate('Register')}
+            style={{ marginTop: 40 }}
           >
-            <Text style={styles.footerText}>
+            <Text style={{ color: COLORS.textMuted }}>
               ¿No tienes una cuenta? <Text style={styles.linkText}>Crear cuenta</Text>
             </Text>
           </TouchableOpacity>
