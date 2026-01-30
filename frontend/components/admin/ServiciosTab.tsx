@@ -207,11 +207,11 @@ export const ServiciosTab: React.FC<Props> = ({ setError, setSuccess }) => {
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-subtext-light dark:text-subtext-dark">
-                  <span className="material-symbols-outlined text-base">euro</span>
+                  <span className="material-symbols-outlined text-base">attach_money</span>
                   <span>Precio</span>
                 </div>
                 <span className="text-xl font-bold text-primary">
-                  {parseFloat(servicio.precio.toString()).toFixed(2)}€
+                  ${parseFloat(servicio.precio.toString()).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -315,7 +315,7 @@ export const ServiciosTab: React.FC<Props> = ({ setError, setSuccess }) => {
               </label>
 
               <label className="flex flex-col">
-                <span className="text-sm font-medium pb-2 text-text-light dark:text-text-dark">Precio (€) *</span>
+                <span className="text-sm font-medium pb-2 text-text-light dark:text-text-dark">Precio ($) *</span>
                 <input
                   required
                   type="number"

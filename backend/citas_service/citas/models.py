@@ -31,7 +31,7 @@ class Servicio(models.Model):
         ordering = ['nombre']
     
     def __str__(self):
-        return f"{self.nombre} ({self.duracion_minutos} min - €{self.precio})"
+        return f"{self.nombre} ({self.duracion_minutos} min - ${self.precio})"
 
 
 class Mascota(models.Model):
