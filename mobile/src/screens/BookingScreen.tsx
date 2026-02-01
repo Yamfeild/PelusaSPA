@@ -1,15 +1,8 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useState, useCallback } from 'react'; 
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-  FlatList,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, ActivityIndicator, Alert, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -17,6 +10,7 @@ import { COLORS } from '../constants/theme';
 import { citasService, Servicio, Horario, Cita } from '../services/citasService';
 import { mascotasService } from '../services/mascotasService';
 import { peluquerosService, Peluquero } from '../services/peluquerosService';
+import { useTheme } from '../context/ThemeContext'; // Importar tema
 
 interface Pet {
   id: number;
@@ -25,13 +19,13 @@ interface Pet {
   edad: number;
 }
 
-export const BookingScreen = ({ navigation }: any) => {
+export const BookingScreen = ({ navigation, route }: any) => {
+  const { isDarkMode } = useTheme();
   const [step, setStep] = useState(1); 
   const [pets, setPets] = useState<Pet[]>([]);
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [peluqueros, setPeluqueros] = useState<Peluquero[]>([]);
-  const [citas, setCitas] = useState<Cita[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
@@ -40,704 +34,631 @@ export const BookingScreen = ({ navigation }: any) => {
   const [selectedFecha, setSelectedFecha] = useState<string>('');
   const [selectedHora, setSelectedHora] = useState<{ inicio: string; fin: string } | null>(null);
   const [notas, setNotas] = useState('');
+  const [workingDays, setWorkingDays] = useState<number[]>([]);
+
+  // Colores Dinámicos
+  const dynamicColors = {
+    bg: isDarkMode ? '#121212' : '#f8faf8',
+    card: isDarkMode ? '#1e1e1e' : '#FFFFFF',
+    header: isDarkMode ? '#1a1a1a' : '#FFFFFF',
+    border: isDarkMode ? '#333333' : '#e0e0e0',
+    text: isDarkMode ? '#FFFFFF' : '#0e1b12',
+    subtext: isDarkMode ? '#AAAAAA' : '#666666',
+    inputBg: isDarkMode ? '#252525' : '#FFFFFF',
+  };
+
+  const reprogramarId = route.params?.reprogramarCitaId;
+  const preSelectedMascotaId = route.params?.mascotaId;
+  const preSelectedServicioId = route.params?.servicioId;
+  const preSelectedPeluqueroId = route.params?.peluqueroId;
+
+  const resetForm = () => {
+    setStep(1);
+    setSelectedPet(null);
+    setSelectedServicio(null);
+    setSelectedPeluquero(null);
+    setSelectedFecha('');
+    setSelectedHora(null);
+    setNotas('');
+    navigation.setParams({ 
+      reprogramarCitaId: undefined, 
+      mascotaId: undefined, 
+      servicioId: undefined, 
+      peluqueroId: undefined 
+    });
+  };
 
   useFocusEffect(
-  useCallback(() => {
-    loadInitialData();
-  }, [])
+    useCallback(() => {
+      loadInitialData();
+    }, [])
   );
+
   useEffect(() => {
-  if (selectedPeluquero && selectedFecha && step === 4) {
+    if (selectedPeluquero && selectedFecha && step === 4) {
+      fetchHorariosDisponibles();
+    }
+  }, [selectedFecha, selectedPeluquero]);
+
+  useEffect(() => {
+    const initReprogramacion = () => {
+      if (reprogramarId && pets.length > 0 && servicios.length > 0 && peluqueros.length > 0) {
+        const pet = pets.find(p => p.id === preSelectedMascotaId);
+        const serv = servicios.find(s => s.id === preSelectedServicioId);
+        const pelu = peluqueros.find(p => p.id === preSelectedPeluqueroId);
+
+        if (pet) setSelectedPet(pet);
+        if (serv) setSelectedServicio(serv);
+        if (pelu) setSelectedPeluquero(pelu);
+        setStep(4);
+      }
+    };
+    initReprogramacion();
+  }, [reprogramarId, pets, servicios, peluqueros]);
+
+  useEffect(() => {
+  if (selectedPeluquero && step === 4) {
     fetchHorariosDisponibles();
   }
-  }, [selectedFecha, selectedPeluquero]);
+}, [selectedPeluquero, step]);
 
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      const [petsData, serviciosData, citasData, peluquerosData] = await Promise.all([
+      const [petsData, serviciosData, peluquerosData] = await Promise.all([
         mascotasService.getMascotas(),
         citasService.getServicios(),
-        citasService.getCitas(),
         peluquerosService.getPeluqueros(),
       ]);
       setPets(petsData);
       setServicios(serviciosData.filter(s => s.activo));
-      setCitas(citasData);
       setPeluqueros(peluquerosData);
     } catch (error) {
-      console.error('Error al cargar datos iniciales:', error);
       Alert.alert('Error', 'No se pudieron cargar los datos');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadHorarios = async () => {
-    try {
-      const data = await citasService.getHorarios();
-      setHorarios(data);
-    } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar los horarios');
-    }
-  };
-
   const fetchHorariosDisponibles = async () => {
-    setLoading(true);
-    try {
+  setLoading(true);
+  try {
+    const data = await citasService.getHorarios(selectedPeluquero?.id);
+    const days = [...new Set(data.filter(h => h.activo).map(h => h.dia_semana))];
+    setWorkingDays(days);
+    const [year, month, day] = selectedFecha.split('-').map(Number);
+    const fechaObj = new Date(year, month - 1, day);
+
+    let dayOfWeek = fechaObj.getDay(); 
+    const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     
-      const data = await citasService.getHorarios(selectedPeluquero?.id);
-      
-      const fechaObj = new Date(selectedFecha + 'T00:00:00');
-      let dayOfWeek = fechaObj.getDay() - 1; 
-      if (dayOfWeek === -1) dayOfWeek = 6;
+    // 1. Filtramos los rangos base del peluquero
+    const rangosBase = data.filter(h => h.dia_semana === dayIndex && h.activo);
+    
+    // 2. Función para generar slots de 30 minutos
+    const generarSlots = (horaInicio: string, horaFin: string) => {
+      const slots = [];
+      let current = new Date(`2026-01-01T${horaInicio}`);
+      const end = new Date(`2026-01-01T${horaFin}`);
 
+      while (current < end) {
+        const inicioStr = current.toTimeString().substring(0, 5);
+        // Sumar 30 minutos
+        current.setMinutes(current.getMinutes() + 60);
+        const finStr = current.toTimeString().substring(0, 5);
+        
+        // No agregar el slot si se pasa de la hora de fin
+        if (current <= end) {
+          slots.push({
+            hora_inicio: inicioStr,
+            hora_fin: finStr,
+            activo: true
+          });
+        }
+      }
+      return slots;
+    };
 
-      const horariosFiltrados = data.filter(h => h.dia_semana === dayOfWeek && h.activo);
-      
-      setHorarios(horariosFiltrados);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // 3. Procesar todos los rangos y aplanarlos en una sola lista
+    let todosLosHorarios: any[] = [];
+    rangosBase.forEach(rango => {
+      const slotsDelRango = generarSlots(rango.hora_inicio, rango.hora_fin);
+      todosLosHorarios = [...todosLosHorarios, ...slotsDelRango];
+    });
+
+    setHorarios(todosLosHorarios);
+  } catch (error) {
+    console.error("Error cargando horarios:", error);
+    Alert.alert("Error", "No se pudieron generar los horarios.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleNextStep = () => {
-    if (step === 1 && !selectedPet) {
-      Alert.alert('Error', 'Selecciona una mascota');
-      return;
-    }
-    if (step === 2 && !selectedServicio) {
-      Alert.alert('Error', 'Selecciona un servicio');
-      return;
-    }
-    if (step === 3 && !selectedPeluquero) {
-      Alert.alert('Error', 'Selecciona un peluquero');
-      return;
-      
-    }
-    
-    if (step === 3) {
-      
-      if (selectedFecha) {
-        fetchHorariosDisponibles();
-      }
-    }
-    if (step === 4 && (!selectedFecha || !selectedHora)) {
-      Alert.alert('Error', 'Selecciona fecha y hora');
-      return;
-    }
-
-    
-    if (step === 2) {
-      loadHorarios();
-    }
+    if (step === 1 && !selectedPet) return Alert.alert('Error', 'Selecciona una mascota');
+    if (step === 2 && !selectedServicio) return Alert.alert('Error', 'Selecciona un servicio');
+    if (step === 3 && !selectedPeluquero) return Alert.alert('Error', 'Selecciona un peluquero');
+    if (step === 4 && (!selectedFecha || !selectedHora)) return Alert.alert('Error', 'Selecciona fecha y hora');
 
     setStep(step + 1);
   };
 
   const handlePrevStep = () => {
-    setStep(step - 1);
+    if (reprogramarId && step === 4) {
+      resetForm();
+      navigation.navigate('Inicio');
+    } else {
+      setStep(step - 1);
+    }
   };
 
   const handleConfirmBooking = async () => {
-    if (!selectedPet || !selectedServicio || !selectedPeluquero || !selectedFecha || !selectedHora) {
-      Alert.alert('Error', 'Faltan datos para completar la reserva');
-      return;
-    }
-
     setLoading(true);
     try {
-      await citasService.createCita({
-        mascota: selectedPet.id,
-        servicio: selectedServicio.id,
-        peluquero_id: selectedPeluquero.id,
-        fecha: selectedFecha,
-        hora_inicio: selectedHora.inicio,
-        hora_fin: selectedHora.fin,
-        notas: notas || undefined,
-      });
-
-      Alert.alert(
-        'Éxito',
-        `Cita reservada para ${selectedPet.nombre} el ${selectedFecha} a las ${selectedHora.inicio}`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              setStep(1);
-              setSelectedPet(null);
-              setSelectedServicio(null);
-              setSelectedPeluquero(null);
-              setSelectedFecha('');
-              setSelectedHora(null);
-              setNotas('');
-              loadInitialData();
-            },
-          },
-        ]
-      );
+      if (reprogramarId) {
+        await citasService.reagendarCita(reprogramarId, {
+          fecha: selectedFecha,
+          hora_inicio: selectedHora!.inicio,
+          hora_fin: selectedHora!.fin,
+        });
+        Alert.alert('Éxito', 'Cita reprogramada');
+      } else {
+        await citasService.createCita({
+          mascota: selectedPet!.id,
+          servicio: selectedServicio!.id,
+          peluquero_id: selectedPeluquero!.id,
+          fecha: selectedFecha,
+          hora_inicio: selectedHora!.inicio,
+          hora_fin: selectedHora!.fin,
+          notas: notas || undefined,
+        });
+        Alert.alert('Éxito', `Cita reservada para ${selectedPet!.nombre}`);
+      }
+      resetForm();
+      navigation.navigate('Inicio');
     } catch (error: any) {
-      console.error('Error al crear cita:', error);
-      Alert.alert('Error', error.response?.data?.error || 'No se pudo crear la cita');
+      Alert.alert('Error', error.response?.data?.error || 'No se pudo procesar la solicitud');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading && step === 1) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-        </View>
-      </SafeAreaView>
-    );
-  }
+ const availableDates = React.useMemo(() => {
+  return [...Array(14)].map((_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    return {
+      dateString: date.toISOString().split('T')[0],
+      dayName: date.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase(),
+      dayNum: date.getDate(),
+      // Añadimos el mes (ej: "FEB" o "MAR")
+      month: date.toLocaleDateString('es-ES', { month: 'short' }).toUpperCase().replace('.', ''),
+    };
+  });
+}, []);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Reservar Cita</Text>
-        <Text style={styles.stepIndicator}>Paso {step} de 5</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: dynamicColors.bg }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: dynamicColors.header, borderBottomColor: dynamicColors.border }]}>
+        <Text style={[styles.headerTitle, { color: dynamicColors.text }]}>
+          {reprogramarId ? 'Cambiar Horario' : 'Reservar Cita'}
+        </Text>
+        <Text style={[styles.stepIndicator, { color: dynamicColors.subtext }]}>
+          {reprogramarId ? 'Selecciona tu nuevo horario' : `Paso ${step} de 5`}
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+        {/* PASO 1: MASCOTAS */}
         {step === 1 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Selecciona tu mascota</Text>
-            {pets.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <MaterialIcons name="pets" size={50} color={COLORS.primary} />
-                <Text style={styles.emptyText}>No tienes mascotas registradas</Text>
-              </View>
-            ) : (
-              <FlatList
-                scrollEnabled={false}
-                data={pets}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.optionCard,
-                      selectedPet?.id === item.id && styles.optionCardSelected,
-                    ]}
-                    onPress={() => setSelectedPet(item)}
-                  >
-                    <MaterialIcons name="pets" size={24} color={COLORS.primary} />
-                    <View style={styles.optionContent}>
-                      <Text style={styles.optionTitle}>{item.nombre}</Text>
-                      <Text style={styles.optionSubtitle}>{item.raza} • {item.edad} años</Text>
-                    </View>
-                    {selectedPet?.id === item.id && (
-                      <MaterialIcons name="check-circle" size={24} color={COLORS.primary} />
-                    )}
-                  </TouchableOpacity>
-                )}
-                keyExtractor={(item) => item.id.toString()}
-              />
-            )}
+            <Text style={[styles.stepTitle, { color: dynamicColors.text }]}>Selecciona tu mascota</Text>
+            {pets.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.optionCard,
+                  { backgroundColor: dynamicColors.card, borderColor: dynamicColors.border },
+                  selectedPet?.id === item.id && styles.optionCardSelected,
+                ]}
+                onPress={() => setSelectedPet(item)}
+              >
+                <MaterialIcons name="pets" size={24} color={COLORS.primary} />
+                <View style={styles.optionContent}>
+                  <Text style={[styles.optionTitle, { color: dynamicColors.text }]}>{item.nombre}</Text>
+                  <Text style={[styles.optionSubtitle, { color: dynamicColors.subtext }]}>{item.raza} • {item.edad} años</Text>
+                </View>
+                {selectedPet?.id === item.id && <MaterialIcons name="check-circle" size={24} color={COLORS.primary} />}
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
-        
+        {/* PASO 2: SERVICIOS */}
         {step === 2 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Selecciona un servicio</Text>
-            <FlatList
-              scrollEnabled={false}
-              data={servicios}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.optionCard,
-                    selectedServicio?.id === item.id && styles.optionCardSelected,
-                  ]}
-                  onPress={() => setSelectedServicio(item)}
-                >
-                  <View style={styles.optionContent}>
-                    <Text style={styles.optionTitle}>{item.nombre}</Text>
-                    <Text style={styles.optionSubtitle}>{item.duracion_minutos} min • ${item.precio}</Text>
-                    {item.descripcion && <Text style={styles.optionDescription}>{item.descripcion}</Text>}
-                  </View>
-                  {selectedServicio?.id === item.id && (
-                    <MaterialIcons name="check-circle" size={24} color={COLORS.primary} />
-                  )}
-                </TouchableOpacity>
-              )}
-              keyExtractor={(item) => item.id.toString()}
-            />
+            <Text style={[styles.stepTitle, { color: dynamicColors.text }]}>Selecciona un servicio</Text>
+            {servicios.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.optionCard,
+                  { backgroundColor: dynamicColors.card, borderColor: dynamicColors.border },
+                  selectedServicio?.id === item.id && styles.optionCardSelected,
+                ]}
+                onPress={() => setSelectedServicio(item)}
+              >
+                <View style={styles.optionContent}>
+                  <Text style={[styles.optionTitle, { color: dynamicColors.text }]}>{item.nombre}</Text>
+                  <Text style={[styles.optionSubtitle, { color: COLORS.primary, fontWeight: 'bold' }]}>
+                    {item.duracion_minutos} min • ${item.precio}
+                  </Text>
+                </View>
+                {selectedServicio?.id === item.id && <MaterialIcons name="check-circle" size={24} color={COLORS.primary} />}
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
-        
+        {/* PASO 3: PELUQUEROS */}
         {step === 3 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Selecciona un peluquero</Text>
-            <FlatList
-              scrollEnabled={false}
-              data={peluqueros}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.optionCard,
-                    selectedPeluquero?.id === item.id && styles.optionCardSelected,
-                  ]}
-                  onPress={() => setSelectedPeluquero(item)}
-                >
-                  <MaterialIcons name="person" size={24} color={COLORS.primary} />
-                  <View style={styles.optionContent}>
-                    <Text style={styles.optionTitle}>{item.nombre}</Text>
-                    <Text style={styles.optionSubtitle}>{item.email}</Text>
-                  </View>
-                  {selectedPeluquero?.id === item.id && (
-                    <MaterialIcons name="check-circle" size={24} color={COLORS.primary} />
-                  )}
-                </TouchableOpacity>
-              )}
-              keyExtractor={(item) => item.id.toString()}
-            />
+            <Text style={[styles.stepTitle, { color: dynamicColors.text }]}>Selecciona un peluquero</Text>
+            {peluqueros.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.optionCard,
+                  { backgroundColor: dynamicColors.card, borderColor: dynamicColors.border },
+                  selectedPeluquero?.id === item.id && styles.optionCardSelected,
+                ]}
+                onPress={() => setSelectedPeluquero(item)}
+              >
+                <MaterialIcons name="person" size={24} color={COLORS.primary} />
+                <View style={styles.optionContent}>
+                  <Text style={[styles.optionTitle, { color: dynamicColors.text }]}>{item.nombre}</Text>
+                  <Text style={[styles.optionSubtitle, { color: dynamicColors.subtext }]}>{item.email}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
-        
         {step === 4 && (
-        <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Selecciona fecha y hora</Text>
-          
-          
-          <Text style={styles.bookingLabel}>Fecha disponible</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles.dateSelector}
-          >
-            {[...Array(7)].map((_, i) => {
-              const date = new Date();
-              date.setDate(date.getDate() + i);
-              const dateString = date.toISOString().split('T')[0];
-              const dayName = date.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase();
-              const dayNum = date.getDate();
-              const isSelected = selectedFecha === dateString;
-
-              return (
-                <TouchableOpacity 
-                  key={dateString}
-                  style={[styles.dateCard, isSelected && styles.dateCardSelected]}
-                  onPress={() => {
-                      setSelectedFecha(dateString);
-                      setSelectedHora(null); 
-                  }}
-                >
-                  <Text style={[styles.dateDayName, isSelected && styles.textWhite]}>{dayName}</Text>
-                  <Text style={[styles.dateDayNum, isSelected && styles.textWhite]}>{dayNum}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          
-          <Text style={[styles.bookingLabel, { marginTop: 20 }]}>
-            Horarios para {selectedPeluquero?.nombre}
-          </Text>
-          
-          <View style={styles.timeGrid}>
-            {horarios.length === 0 ? (
-              <Text style={styles.emptyText}>No hay horarios disponibles para esta fecha</Text>
-            ) : (
-              horarios.map((item, index) => {
-                const isSelected = selectedHora?.inicio === item.hora_inicio;
+          <View style={styles.stepContainer}>
+            <Text style={[styles.stepTitle, { color: dynamicColors.text }]}>Fecha y Hora</Text>
+            
+            {/* Selector de Fecha */}
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              style={styles.dateSelector}
+              contentContainerStyle={{ paddingRight: 20 }}
+            >
+              {availableDates.map((item) => {
+                const isSelected = selectedFecha === item.dateString;
+                const dateObj = new Date(item.dateString + 'T12:00:00');
+                let dayOfWeek = dateObj.getDay(); 
+                const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Ajuste a tu lógica de backend
                 
-                const estaDisponible = item.activo; 
-
+                const isWorkingDay = workingDays.includes(dayIndex);
                 return (
-                  <TouchableOpacity
-                    key={index}
+                  <TouchableOpacity 
+                    key={item.dateString}
                     style={[
-                      styles.timeSlot,
-                      isSelected && styles.timeSlotSelected,
-                      !estaDisponible && styles.timeSlotDisabled
+                      styles.dateCard, 
+                      { 
+                        backgroundColor: isSelected ? COLORS.primary : dynamicColors.card, 
+                        borderColor: isSelected ? COLORS.primary : dynamicColors.border,
+                        // Si no trabaja, le bajamos la opacidad y quitamos color
+                        opacity: isWorkingDay ? 1 : 0.4 
+                      },
+                      // Colorcito suave si es día laboral pero no está seleccionado
+                      isWorkingDay && !isSelected && { backgroundColor: isDarkMode ? '#1a2e1f' : '#f0fdf4', borderColor: COLORS.primary + '40' }
                     ]}
-                    disabled={!estaDisponible}
-                    onPress={() => setSelectedHora({ inicio: item.hora_inicio, fin: item.hora_fin })}
+                    onPress={() => { setSelectedFecha(item.dateString); setSelectedHora(null); }}
                   >
                     <Text style={[
-                      styles.timeSlotText, 
-                      isSelected && styles.textWhite,
-                      !estaDisponible && styles.textDisabled
+                      { fontSize: 9, fontWeight: '700' }, 
+                      isSelected ? styles.textWhite : { color: isWorkingDay ? COLORS.primary : dynamicColors.subtext }
                     ]}>
-                      {item.hora_inicio.substring(0, 5)}
+                      {item.month}
+                    </Text>
+                    
+                    <Text style={[styles.dateDayName, isSelected ? styles.textWhite : { color: dynamicColors.subtext }]}>
+                      {item.dayName}
+                    </Text>
+                    
+                    <Text style={[
+                      styles.dateDayNum, 
+                      isSelected ? styles.textWhite : { color: dynamicColors.text },
+                      !isWorkingDay && { color: dynamicColors.subtext } // Gris si no trabaja
+                    ]}>
+                      {item.dayNum}
                     </Text>
                   </TouchableOpacity>
                 );
-              })
-            )}
-          </View>
+              })}
+            </ScrollView>
 
-          <Text style={[styles.bookingLabel, { marginTop: 25 }]}>Notas (opcional)</Text>
-          <TextInput
-            style={styles.textArea}
-            placeholder="Ej: Mi mascota es alérgica a ciertos tipos de shampoo..."
-            multiline
-            numberOfLines={4}
-            value={notas}
-            onChangeText={setNotas}
-          />
-        </View>
-      )}
+            {/* Grid de Horarios */}
+            <View style={styles.timeGrid}>
+              <Text style={[
+                    styles.emptyText, 
+                    { 
+                      width: '100%', 
+                      marginTop: 10, 
+                      color: dynamicColors.text
+                    }
+                  ]}>
+                  Elije un horario:
+                </Text>
+              {horarios.length > 0 ? (
+                
+                horarios.map((item, index) => {
+                  const isSelected = selectedHora?.inicio === item.hora_inicio;
+                  const isDisabled = !item.activo;
+                  
+                  return (
+                    
+                    <TouchableOpacity
+                      key={`${item.hora_inicio}-${index}`}
+                      disabled={isDisabled}
+                      style={[
+                        styles.timeSlot,
+                        { 
+                          backgroundColor: isSelected ? COLORS.primary : dynamicColors.card, 
+                          borderColor: isSelected ? COLORS.primary : dynamicColors.border 
+                        },
+                        isDisabled && styles.timeSlotDisabled
 
-        
-        {step === 5 && (
-          <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Confirma tu reserva</Text>
-            <View style={styles.confirmationBox}>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Mascota:</Text>
-                <Text style={styles.confirmValue}>{selectedPet?.nombre} ({selectedPet?.raza})</Text>
-              </View>
-              <View style={styles.confirmDivider} />
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Servicio:</Text>
-                <Text style={styles.confirmValue}>{selectedServicio?.nombre}</Text>
-              </View>
-              {selectedServicio?.descripcion && (
-                <View style={styles.confirmRow}>
-                  <Text style={styles.confirmLabel}>Descripción:</Text>
-                  <Text style={styles.confirmDescription}>{selectedServicio?.descripcion}</Text>
+                        
+                      ]}
+                      onPress={() => setSelectedHora({ inicio: item.hora_inicio, fin: item.hora_fin })}
+                    >
+                      <Text style={[
+                        styles.timeSlotText, 
+                        { color: isSelected ? '#fff' : dynamicColors.text },
+                        isDisabled && styles.textDisabled
+                      ]}>
+                        {item.hora_inicio.substring(0, 5)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })
+              ) : (
+                <View style={{ width: '100%', padding: 20, alignItems: 'center' }}>
+                  <MaterialIcons name="event-busy" size={40} color={dynamicColors.subtext} />
+                  <Text style={[styles.emptyText, { textAlign: 'center', color: dynamicColors.text, marginTop: 10 }]}>
+                    No hay turnos disponibles para este día.
+                  </Text>
                 </View>
               )}
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Duración:</Text>
-                <Text style={styles.confirmValue}>{selectedServicio?.duracion_minutos} minutos</Text>
-              </View>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Precio:</Text>
-                <Text style={styles.confirmPrice}>${selectedServicio?.precio}</Text>
-              </View>
-              <View style={styles.confirmDivider} />
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Peluquero:</Text>
-                <View style={{ flex: 0.65 }}>
-                  <Text style={[styles.confirmValue, { width: '100%' }]}>{selectedPeluquero?.nombre}</Text>
-                  <Text style={styles.confirmSubtext}>{selectedPeluquero?.email}</Text>
-                </View>
-              </View>
-              <View style={styles.confirmDivider} />
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Fecha:</Text>
-                <Text style={styles.confirmValue}>{selectedFecha}</Text>
-              </View>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Hora:</Text>
-                <Text style={styles.confirmValue}>{selectedHora?.inicio} - {selectedHora?.fin}</Text>
-              </View>
+              <Text style={[
+                    styles.emptyText, 
+                    { 
+                      width: '100%', 
+                      marginTop: 10, 
+                      color: dynamicColors.text
+                    }
+                  ]}>
+                  Escribe un comentario:
+                </Text>
             </View>
+            {/* Notas */}
+            <TextInput
+              style={[
+                styles.textArea, 
+                { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border, color: dynamicColors.text }
+              ]}
+              placeholder="Comentario (opcional)..."
+              placeholderTextColor={isDarkMode ? '#555' : '#999'}
+              multiline
+              numberOfLines={3}
+              value={notas}
+              onChangeText={setNotas}
+            />
           </View>
         )}
+
+        {/* PASO 5: CONFIRMACIÓN COMPLETA */}
+          {step === 5 && (
+            <View style={styles.stepContainer}>
+              <Text style={[styles.stepTitle, { color: dynamicColors.text }]}>Resumen de tu cita</Text>
+              
+              <View style={[
+                styles.confirmationBox, 
+                { backgroundColor: dynamicColors.card, borderColor: dynamicColors.border }
+              ]}>
+                
+                {/* SECCIÓN: MASCOTA Y SERVICIO */}
+                <View style={styles.summarySection}>
+                  <MaterialIcons name="pets" size={20} color={COLORS.primary} />
+                  <View style={styles.summaryTextContainer}>
+                    <Text style={[styles.confirmLabel, { color: dynamicColors.subtext }]}>Mascota y Servicio</Text>
+                    <Text style={[styles.confirmValue, { color: dynamicColors.text }]}>
+                      {selectedPet?.nombre} — {selectedServicio?.nombre}
+                    </Text>
+                    {selectedServicio?.descripcion && (
+                      <Text style={[styles.confirmDescription, { color: dynamicColors.subtext }]}>
+                        {selectedServicio.descripcion}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+
+                <View style={[styles.confirmDivider, { backgroundColor: dynamicColors.border }]} />
+
+                {/* SECCIÓN: PELUQUERO */}
+                <View style={styles.summarySection}>
+                  <MaterialIcons name="person" size={20} color={COLORS.primary} />
+                  <View style={styles.summaryTextContainer}>
+                    <Text style={[styles.confirmLabel, { color: dynamicColors.subtext }]}>Peluquero asignado</Text>
+                    <Text style={[styles.confirmValue, { color: dynamicColors.text }]}>{selectedPeluquero?.nombre}</Text>
+                  </View>
+                </View>
+
+                <View style={[styles.confirmDivider, { backgroundColor: dynamicColors.border }]} />
+
+                {/* SECCIÓN: FECHA Y HORA */}
+                <View style={styles.summarySection}>
+                  <MaterialIcons name="event" size={20} color={COLORS.primary} />
+                  <View style={styles.summaryTextContainer}>
+                    <Text style={[styles.confirmLabel, { color: dynamicColors.subtext }]}>Fecha y Hora</Text>
+                    <Text style={[styles.confirmValue, { color: dynamicColors.text }]}>
+                      {new Date(selectedFecha + 'T12:00:00').toLocaleDateString('es-ES', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long' 
+                      })}
+                    </Text>
+                    <Text style={[styles.confirmValue, { color: COLORS.primary }]}>
+                      {selectedHora?.inicio.substring(0, 5)} - {selectedHora?.fin.substring(0, 5)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* SECCIÓN: NOTAS (Solo si existen) */}
+                {notas.trim() !== '' && (
+                  <>
+                    <View style={[styles.confirmDivider, { backgroundColor: dynamicColors.border }]} />
+                    <View style={styles.summarySection}>
+                      <MaterialIcons name="chat-bubble-outline" size={20} color={COLORS.primary} />
+                      <View style={styles.summaryTextContainer}>
+                        <Text style={[styles.confirmLabel, { color: dynamicColors.subtext }]}>Notas adicionales</Text>
+                        <Text style={[styles.confirmDescription, { color: dynamicColors.text }]}>{notas}</Text>
+                      </View>
+                    </View>
+                  </>
+                )}
+
+                {/* SECCIÓN: PRECIO TOTAL */}
+                <View style={[styles.priceTag, { backgroundColor: isDarkMode ? '#252525' : '#f0f7f1' }]}>
+                  <Text style={[styles.confirmLabel, { color: dynamicColors.text }]}>Total a pagar:</Text>
+                  <Text style={styles.confirmPrice}>${selectedServicio?.precio}</Text>
+                </View>
+              </View>
+
+              
+            </View>
+          )}
       </ScrollView>
 
-      
-      <View style={styles.footer}>
+      {/* FOOTER FIX */}
+      <View style={[styles.footer, { backgroundColor: dynamicColors.header, borderTopColor: dynamicColors.border }]}>
         {step > 1 && (
-          <TouchableOpacity style={styles.buttonSecondary} onPress={handlePrevStep}>
-            <Text style={styles.buttonSecondaryText}>Atrás</Text>
+          <TouchableOpacity style={[styles.buttonSecondary, { backgroundColor: isDarkMode ? '#333' : '#e0e0e0' }]} onPress={handlePrevStep}>
+            <Text style={[styles.buttonSecondaryText, { color: isDarkMode ? '#fff' : '#333' }]}>Atrás</Text>
           </TouchableOpacity>
         )}
-        {step < 5 ? (
-          <TouchableOpacity
-            style={[styles.buttonPrimary, step === 1 && { flex: 1 }]}
-            onPress={handleNextStep}
-          >
-            <Text style={styles.buttonText}>Siguiente</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[styles.buttonPrimary, { flex: 1 }]}
-            onPress={handleConfirmBooking}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Confirmar Reserva</Text>
-            )}
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity style={styles.buttonPrimary} onPress={step === 5 ? handleConfirmBooking : handleNextStep}>
+          <Text style={styles.buttonText}>{step === 5 ? 'Confirmar' : 'Siguiente'}</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
+// Componente auxiliar para la tabla de confirmación
+const ConfirmRow = ({ label, value, color, isBold }: any) => (
+  <View style={styles.confirmRow}>
+    <Text style={styles.confirmLabel}>{label}:</Text>
+    <Text style={[styles.confirmValue, { color, fontWeight: isBold ? '800' : '600' }]}>{value}</Text>
+  </View>
+);
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8faf8',
+  container: { flex: 1 },
+  emptyText: { 
+    color: 'gray',
+    fontSize: 16,
   },
-  header: {
-    padding: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#0e1b12',
-  },
-  stepIndicator: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 150,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stepContainer: {
-    marginBottom: 20,
-  },
-  stepTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0e1b12',
-    marginBottom: 15,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 40,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-  },
+  header: { padding: 20, borderBottomWidth: 1 },
+  headerTitle: { fontSize: 22, fontWeight: '800' },
+  stepIndicator: { fontSize: 13, marginTop: 4 },
+  scrollContent: { padding: 20, paddingBottom: 100 },
+  stepContainer: { marginBottom: 20 },
+  stepTitle: { fontSize: 18, fontWeight: '700', marginBottom: 15 },
   optionCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: '#e0e0e0',
-    alignItems: 'center',
-    gap: 12,
+    flexDirection: 'row', borderRadius: 12, padding: 15,
+    marginBottom: 10, borderWidth: 2, alignItems: 'center', gap: 12,
   },
-  optionCardSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: 'rgba(51, 119, 64, 0.05)',
-  },
-  optionContent: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0e1b12',
-  },
-  optionSubtitle: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-  },
-  optionDescription: {
-    fontSize: 11,
-    color: '#999',
-    marginTop: 6,
-    fontStyle: 'italic',
-  },
-  bookingInfo: {
-    marginBottom: 20,
-  },
-  bookingLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0e1b12',
-    marginBottom: 8,
-  },
-  bookingSubtext: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 8,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    gap: 10,
-  },
-  inputValue: {
-    fontSize: 14,
-    color: '#666',
-  },
-  horaSelected: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(51, 119, 64, 0.1)',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    alignItems: 'center',
-    gap: 10,
-  },
-  horaSelectedText: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-  confirmationBox: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  confirmRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
-  confirmDivider: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-    marginVertical: 10,
-  },
-  confirmLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#666',
-    flex: 0.35,
-  },
-  confirmValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0e1b12',
-    flex: 0.65,
-    textAlign: 'right',
-  },
-  confirmPrice: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.primary,
-    flex: 0.65,
-    textAlign: 'right',
-  },
-  confirmDescription: {
-    fontSize: 12,
-    color: '#999',
-    fontStyle: 'italic',
-    flex: 0.65,
-    textAlign: 'right',
-  },
-  confirmSubtext: {
-    fontSize: 11,
-    color: '#999',
-    marginTop: 4,
-  },
-  footer: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  buttonPrimary: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  buttonSecondary: {
-    backgroundColor: '#e0e0e0',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 0.4,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonSecondaryText: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-
-  dateSelector: {
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  dateCard: {
-    width: 65,
-    height: 80,
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  dateCardSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-    elevation: 4,
-  },
-  dateDayName: { fontSize: 10, color: '#666', fontWeight: 'bold' },
-  dateDayNum: { fontSize: 18, fontWeight: '800', color: '#0e1b12' },
-  timeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 10,
-  },
-  timeSlot: {
-    width: '30%',
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    alignItems: 'center',
-  },
-  timeSlotSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  timeSlotDisabled: {
-    backgroundColor: '#f0f0f0',
-    borderColor: '#f0f0f0',
-  },
-  timeSlotText: { fontWeight: '700', color: '#333' },
+  optionCardSelected: { borderColor: COLORS.primary, backgroundColor: 'rgba(51, 119, 64, 0.1)' },
+  optionContent: { flex: 1 },
+  optionTitle: { fontSize: 16, fontWeight: '600' },
+  optionSubtitle: { fontSize: 13, marginTop: 2 },
+  dateSelector: { marginBottom: 20 },
+  dateCard: { width: 65, height: 80, borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1 },
+  dateCardSelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  dateDayName: { fontSize: 10, fontWeight: 'bold' },
+  dateDayNum: { fontSize: 18, fontWeight: '800' },
+  timeGrid: { 
+  flexDirection: 'row', 
+  flexWrap: 'wrap', 
+  justifyContent: 'flex-start', // Alinea a la izquierda
+  width: '100%',
+  gap: 10, 
+  marginBottom: 20 
+},
+  timeSlot: { 
+  width: '30%', // Esto garantiza 3 columnas
+  paddingVertical: 15, // Más espacio para tocar con el dedo
+  borderRadius: 10, 
+  borderWidth: 1, 
+  alignItems: 'center',
+  marginBottom: 5 // Espacio inferior extra
+},
+  timeSlotSelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  timeSlotDisabled: { opacity: 0.3 },
+  timeSlotText: { fontWeight: '700' },
   textWhite: { color: '#fff' },
-  textDisabled: { color: '#bbb' },
-  textArea: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    textAlignVertical: 'top',
-    height: 80,
-  },
+  textDisabled: { textDecorationLine: 'line-through' },
+  textArea: { borderRadius: 12, padding: 12, borderWidth: 1, height: 80, marginTop: 10, textAlignVertical: 'top' },
+  confirmationBox: { borderRadius: 12, padding: 15, borderWidth: 1 },
+  confirmRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
+  confirmLabel: { fontSize: 14, color: '#888', fontWeight: '600' },
+  confirmValue: { fontSize: 14 },
+  footer: { flexDirection: 'row', gap: 10, padding: 20, borderTopWidth: 1 },
+  buttonPrimary: { backgroundColor: COLORS.primary, padding: 16, borderRadius: 12, flex: 1, alignItems: 'center' },
+  buttonSecondary: { padding: 16, borderRadius: 12, flex: 0.4, alignItems: 'center' },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  buttonSecondaryText: { fontSize: 16, fontWeight: '600' },
+  summarySection: {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: 12,
+  paddingVertical: 10,
+},
+summaryTextContainer: {
+  flex: 1,
+},
+priceTag: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: 15,
+  borderRadius: 12,
+  marginTop: 15,
+},
+confirmDivider: {
+  height: 1,
+  marginVertical: 8,
+},
+confirmDescription: {
+  fontSize: 13,
+  fontStyle: 'italic',
+  marginTop: 2,
+},
+confirmPrice: {
+  fontSize: 22,
+  fontWeight: '800',
+  color: COLORS.primary,
+},
+disclaimer: {
+  fontSize: 12,
+  textAlign: 'center',
+  marginTop: 20,
+  lineHeight: 18,
+},
 });

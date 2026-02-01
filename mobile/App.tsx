@@ -5,7 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { View, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
+import { useTheme } from './src/context/ThemeContext';
 // Contextos
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext'; // <--- IMPORTANTE
@@ -32,6 +32,7 @@ const AuthNavigator = () => (
 );
 
 const ClientTabs = () => {
+  const { isDarkMode } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -46,7 +47,12 @@ const ClientTabs = () => {
         },
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: '#9ca3af',
-        tabBarStyle: { height: 70, paddingBottom: 10 },
+        tabBarStyle: { 
+          height: 70, 
+          paddingBottom: 10,
+          backgroundColor: isDarkMode ? '#1e1e1e' : '#fff', // Fondo oscuro
+          borderTopColor: isDarkMode ? '#333' : '#f0f0f0', // Borde superior
+        },
       })}
     >
       <Tab.Screen name="Inicio" component={HomeScreen} />
