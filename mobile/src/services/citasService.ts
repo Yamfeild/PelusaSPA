@@ -28,7 +28,9 @@ export interface Horario {
 export interface Cita {
   id: number;
   mascota: number;
+  mascota_nombre?: string;
   servicio: number;
+  servicio_nombre?: string;
   peluquero_id: number;
   fecha: string;
   hora_inicio: string;
@@ -145,14 +147,26 @@ export const citasService = {
   },
 
   
-  async cancelarCita(id: number): Promise<Cita> {
+  // En citasService.ts
+async cancelarCita(id: number): Promise<Cita> {
     try {
-      const response = await citasApi.patch(`/api/citas/${id}/`, {
-        estado: 'CANCELADA'
-      });
+      // Usamos POST y la ruta exacta que usa tu Web
+      // Asegúrate de que la URL termine en / para evitar errores de redirección en Django
+      const response = await citasApi.post(`/api/citas/${id}/cancelar/`);
       return response.data;
-    } catch (error) {
-      console.error('Error al cancelar cita:', error);
+    } catch (error: any) {
+      console.error('Error al cancelar cita:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // REAGENDAR (También podrías necesitarlo igual que en la Web)
+  async reagendarCita(id: number, data: { fecha: string; hora_inicio: string; hora_fin: string }): Promise<Cita> {
+    try {
+      const response = await citasApi.post(`/api/citas/${id}/reagendar/`, data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error al reagendar:', error.response?.data);
       throw error;
     }
   },

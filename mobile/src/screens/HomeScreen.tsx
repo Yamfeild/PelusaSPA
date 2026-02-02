@@ -1,31 +1,48 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Alert, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../constants/theme';
 import { useFocusEffect } from '@react-navigation/native';
-
-
+import { useTheme } from '../context/ThemeContext'; 
+import { peluquerosService, Peluquero } from '../services/peluquerosService';
 
 import { mascotasService } from '../services/mascotasService';
 import { citasService, Cita } from '../services/citasService';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
+  const { isDarkMode } = useTheme();
   const [pets, setPets] = useState<any[]>([]);
   const [citas, setCitas] = useState<Cita[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('TODOS');
+  const [peluqueros, setPeluqueros] = useState<Peluquero[]>([]);
 
-  const loadData = async () => {
+  const dynamicColors = {
+  bg: isDarkMode ? '#121212' : '#FFFFFF',
+  card: isDarkMode ? '#1E1E1E' : '#FFFFFF',
+  text: isDarkMode ? '#FFFFFF' : '#333333', 
+  subText: isDarkMode ? '#AAAAAA' : '#888888',
+  border: isDarkMode ? '#333333' : '#F0F0F0',
+  tabInactive: isDarkMode ? '#333' : '#F0F0F0',
+};
+
+ const loadData = async () => {
     try {
-      const [petsData, citasData] = await Promise.all([
+     
+      const [petsData, citasData, peluquerosData] = await Promise.all([
         mascotasService.getMascotas(),
-        citasService.getCitas()
+        citasService.getCitas(), 
+        peluquerosService.getPeluqueros() 
       ]);
+      
       setPets(petsData);
       setCitas(citasData);
+      setPeluqueros(peluquerosData); 
+      
     } catch (error) {
       console.error("Error cargando datos del Home:", error);
     } finally {
@@ -52,25 +69,94 @@ export const HomeScreen = ({ navigation }: any) => {
       </View>
     );
   }
+  // Lógica para filtrar las citas
+// Lógica para filtrar y ORDENAR las citas
+  const citasFiltradas = citas
+    .filter(cita => {
+      if (activeFilter === 'TODOS') return true;
+      
+      const estadoCita = cita.estado.toUpperCase();
+      
+      if (activeFilter === 'ACEPTADA') {
+        return estadoCita === 'ACEPTADA' || estadoCita === 'CONFIRMADA';
+      }
+      
+      if (activeFilter === 'FINALIZADA') {
+        return estadoCita === 'FINALIZADA' || estadoCita === 'COMPLETADA' || estadoCita === 'TERMINADA';
+      }
+      
+      return estadoCita === activeFilter;
+    })
+    .sort((a, b) => {
+      const dateTimeA = new Date(`${a.fecha}T${a.hora_inicio}`);
+      const dateTimeB = new Date(`${b.fecha}T${b.hora_inicio}`);
+      
+      // Orden ASCENDENTE (de la más cercana a la más lejana)
+      return dateTimeA.getTime() - dateTimeB.getTime();
+    });
+
+  const handleCancelarCita = (cita: Cita) => {
+  Alert.alert(
+    "Confirmar Cancelación",
+    `¿Estás seguro de que deseas cancelar la cita de ${cita.mascota_nombre}?`,
+    [
+      { text: "No", style: "cancel" },
+      { 
+        text: "Sí, cancelar", 
+        style: "destructive", 
+        onPress: async () => {
+          try {
+            // 1. Mostramos indicador de carga
+            setLoading(true);
+            
+            await citasService.cancelarCita(cita.id);
+            
+            Alert.alert("Éxito", "La cita ha sido procesada correctamente.");
+
+            await loadData(); 
+            
+          } catch (error: any) {
+            // Capturamos el error 403 o cualquier otro detalle del backend
+            const serverMsg = error.response?.data?.error || 
+                             error.response?.data?.detail || 
+                             "No se pudo completar la acción.";
+            
+            Alert.alert("Error", serverMsg);
+            console.error("Error al cancelar:", error.response?.data);
+          } finally {
+            setLoading(false);
+          }
+        }
+      }
+    ]
+  );
+};
+
+const getNombrePeluquero = (id: number) => {
+  const p = peluqueros.find(item => item.id === id);
+  return p ? p.nombre : `ID: ${id}`; 
+};
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: dynamicColors.bg }]}>
  
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: dynamicColors.border, backgroundColor: dynamicColors.bg }]}>
         <View style={styles.userInfo}>
-          <View style={styles.avatarPlaceholder}>
+          <View style={[styles.avatarPlaceholder, { backgroundColor: COLORS.primary + '20' }]}>
           
           <Text style={styles.avatarInitial}>
-            {user?.username?.charAt(0).toUpperCase() || 'U'}
-          </Text>
+              {user?.username?.charAt(0).toUpperCase() || 'U'}
+            </Text>
           
         </View>
           <View>
             <Text style={styles.welcomeText}>BIENVENIDO</Text>
-            <Text style={styles.userName}>{user?.username || 'Usuario'}</Text>
+            <Text style={[styles.userName, { color: dynamicColors.text }]}>
+              {user?.username || 'Usuario'}
+            </Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.notifButton}>
+        <TouchableOpacity style={[styles.notifButton, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f5f5f5' }]}>
           <MaterialIcons name="notifications-none" size={24} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
@@ -78,12 +164,13 @@ export const HomeScreen = ({ navigation }: any) => {
       <ScrollView 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={{ paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} color={COLORS.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
       >
         
         
+        {/* SECCIÓN MASCOTAS */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Mis Mascotas</Text>
+          <Text style={[styles.sectionTitle, { color: dynamicColors.text }]}>Mis Mascotas</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Mascotas')}>
             <Text style={styles.verTodas}>Ver Todas</Text>
           </TouchableOpacity>
@@ -92,79 +179,163 @@ export const HomeScreen = ({ navigation }: any) => {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
           {pets.length === 0 ? (
             <View style={{ padding: 20, alignItems: 'center' }}> 
-              <Text style={styles.emptyText}>No tienes mascotas registradas</Text>
+              <Text style={[styles.emptyText, { color: dynamicColors.subText }]}>No tienes mascotas registradas</Text>
             </View>
           ) : (
             pets.map((pet) => (
-              <View key={pet.id} style={styles.petCard}>
-                {/* Contenedor circular con icono en lugar de Image */}
-                <View style={styles.petIconCircle}>
+              <View key={pet.id} style={[styles.petCard, { backgroundColor: dynamicColors.card, borderColor: dynamicColors.border }]}>
+                <View style={[styles.petIconCircle, { borderColor: COLORS.primary + '30' }]}>
                   <MaterialIcons name="pets" size={30} color={COLORS.primary} />
                 </View>
-
-                <View>
-                  <Text style={styles.petName}>{pet.nombre}</Text>
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                  {/* AQUÍ ESTABA EL ERROR: Forzamos el color del texto */}
+                  <Text style={[styles.petName, { color: dynamicColors.text }]} numberOfLines={1}>
+                    {pet.nombre}
+                  </Text>
                   <View style={styles.statusBadge}>
-                    <MaterialIcons name="pets" size={12} color={COLORS.primary} />
-                    <Text style={styles.statusText}>{pet.raza}</Text>
+                    <Text style={[styles.statusText, { color: COLORS.primary }]} numberOfLines={1}>{pet.raza}</Text>
                   </View>
                 </View>
               </View>
             ))
           )}
-          </ScrollView>
+        </ScrollView>
 
         
-        <Text style={[styles.sectionTitle, { marginHorizontal: 20, marginTop: 25 }]}>Próximas Citas</Text>
-        
-        {citas.slice(0, 3).map((cita) => (
-          <View key={cita.id} style={styles.appointmentCard}>
-            <View style={styles.cardHeader}>
-              <View style={[styles.badgeAceptada, { backgroundColor: cita.estado === 'pendiente' ? '#FFA500' : COLORS.primary }]}>
-                <Text style={styles.badgeText}>{cita.estado.toUpperCase()}</Text>
-              </View>
-              <Text style={styles.petLabel}> • {cita.mascota_nombre}</Text>
-            </View>
-            
-            {/* AQUÍ ESTÁ EL TRUCO: El icono entra en el cardBody */}
-            <View style={styles.cardBody}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.serviceTitle}>{cita.servicio_nombre}</Text>
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="calendar-today" size={16} color={COLORS.primary} />
-                  <Text style={styles.infoText}>{cita.fecha} • {cita.hora_inicio.substring(0,5)}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="person" size={16} color={COLORS.primary} />
-                  <Text style={styles.infoText}>Peluquero: {cita.peluquero_id}</Text>
-                </View>
-              </View>
+        <View style={[styles.sectionHeader, { marginTop: 25 }]}>
+          <Text 
+            style={[
+              styles.sectionTitle, 
+              { color: dynamicColors.text } // Esto hará que pase de negro a blanco
+            ]}
+          >
+            Próximas Citas
+          </Text>
+        </View>
 
-              {/* Este View ahora es hermano del View con flex:1, por eso sale a la derecha */}
-              <View style={styles.serviceIconContainer}>
-                <MaterialIcons 
-                  name={cita.servicio_nombre.toLowerCase().includes('baño') ? 'waves' : 'content-cut'} 
-                  size={28} 
-                  color={COLORS.primary} 
-                />
-              </View>
-            </View>
-
-            <View style={styles.cardFooter}>
-              <TouchableOpacity style={styles.btnDetalles}>
-                <MaterialIcons name="info-outline" size={18} color={COLORS.primary} />
-                <Text style={styles.btnTextPrimary}> Editar</Text>
+        {/* TABS DE FILTRADO */}
+        <View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            style={styles.filterTabs}
+          >
+            {['TODOS', 'PENDIENTE', 'ACEPTADA', 'CANCELADA', 'FINALIZADA'].map((filter) => (
+              <TouchableOpacity 
+                key={filter} 
+                onPress={() => setActiveFilter(filter)}
+                style={[
+                  styles.filterTabContainer,
+                  { 
+                    backgroundColor: activeFilter === filter ? COLORS.primary : dynamicColors.tabInactive, 
+                    borderColor: dynamicColors.border 
+                  },
+                  activeFilter === filter && styles.activeTabContainer
+                ]}
+              >
+                <Text style={[
+                  styles.filterTabText, 
+                  { color: activeFilter === filter ? '#fff' : dynamicColors.subText },
+                  activeFilter === filter && styles.activeFilterText
+                ]}>
+                  {filter === 'ACEPTADA' ? 'CONFIRMADAS' : filter}
+                </Text>
               </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+        
+          {/* ... dentro del ScrollView principal ... */}
+
+          {citasFiltradas.length === 0 ? (
+            <View style={{ padding: 40, alignItems: 'center' }}>
+              {/* Color de icono dinámico */}
+              <MaterialIcons name="event-busy" size={50} color={isDarkMode ? '#333' : '#eee'} />
+              <Text style={{ color: dynamicColors.subText, marginTop: 10 }}>No hay citas en esta categoría</Text>
             </View>
-          </View>
-        ))}
+          ) : (
+            citasFiltradas.map((cita) => (
+              /* TARJETA CON FONDO DINÁMICO */
+              <View 
+                key={cita.id} 
+                style={[
+                  styles.appointmentCard, 
+                  { backgroundColor: dynamicColors.card, borderColor: dynamicColors.border }
+                ]}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={[styles.badgeAceptada, { 
+                      backgroundColor: cita.estado.toLowerCase() === 'cancelada' ? '#FF4444' 
+                      : cita.estado.toLowerCase() === 'pendiente' ? '#FFA500' 
+                      : (cita.estado.toLowerCase() === 'finalizada' || cita.estado.toLowerCase() === 'completada') ? '#455A64' 
+                      : COLORS.primary 
+                  }]}>
+                    <Text style={styles.badgeText}>{cita.estado.toUpperCase()}</Text>
+                  </View>
+                  <Text style={[styles.petLabel, { color: dynamicColors.subText }]}> • {cita.mascota_nombre}</Text>
+                </View>
+                
+                <View style={styles.cardBody}>
+                  <View style={{ flex: 1 }}>
+                    {/* TÍTULO DEL SERVICIO DINÁMICO */}
+                    <Text style={[styles.serviceTitle, { color: dynamicColors.text }]}>{cita.servicio_nombre}</Text>
+                    
+                    <View style={styles.infoRow}>
+                      <MaterialIcons name="calendar-today" size={16} color={COLORS.primary} />
+                      <Text style={[styles.infoText, { color: dynamicColors.subText }]}>{cita.fecha} • {cita.hora_inicio.substring(0,5)}</Text>
+                    </View>
+                    
+                    <View style={styles.infoRow}>
+                      <MaterialIcons name="person" size={16} color={COLORS.primary} />
+                      <Text style={[styles.infoText, { color: dynamicColors.subText }]}>
+                        {/* Aquí usamos la función de búsqueda */}
+                        Peluquero: {getNombrePeluquero(cita.peluquero_id)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* CONTENEDOR DE ICONO CON OPACIDAD DINÁMICA */}
+                  <View style={[styles.serviceIconContainer, { backgroundColor: isDarkMode ? '#2c2c2c' : COLORS.primary + '15' }]}>
+                    <MaterialIcons 
+                      name={cita.servicio_nombre?.toLowerCase().includes('baño') ? 'waves' : 'content-cut'} 
+                      size={28} 
+                      color={COLORS.primary} 
+                    />
+                  </View>
+                </View>
+
+                {/* FOOTER DE LA TARJETA */}
+                {cita.estado.toUpperCase() === 'PENDIENTE' && (
+                  <View style={[styles.cardFooter, { borderTopColor: dynamicColors.border }]}>
+                    <TouchableOpacity 
+                      style={[styles.btnDetalles, { borderColor: COLORS.primary + '40' }]}
+                      onPress={() => navigation.navigate('Reservar', { 
+                        reprogramarCitaId: cita.id,
+                        mascotaId: cita.mascota,
+                        servicioId: cita.servicio,
+                        peluqueroId: cita.peluquero_id
+                      })}
+                    >
+                      <MaterialIcons name="event" size={18} color={COLORS.primary} />
+                      <Text style={styles.btnTextPrimary}> Reprogramar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[styles.btnDetalles, styles.btnCancelar]} 
+                      onPress={() => handleCancelarCita(cita)} 
+                    >
+                      <MaterialIcons name="cancel" size={18} color="#FF4444" />
+                      <Text style={styles.btnTextCancelar}> Cancelar</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))
+          )}
       </ScrollView>
 
       
-      <TouchableOpacity 
-        style={styles.fab}
-        onPress={() => navigation.navigate('Reservar')} // Asegúrate que el nombre coincida con tu Stack
-      >
+      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('Reservar')}>
         <MaterialIcons name="add" size={24} color="#fff" />
         <Text style={styles.fabText}>Reservar</Text>
       </TouchableOpacity>
@@ -173,71 +344,140 @@ export const HomeScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  container: { flex: 1 }, // Quitamos backgroundColor fijo
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 20, 
+    borderBottomWidth: 1 
+  },
   userInfo: { flexDirection: 'row', alignItems: 'center' },
-  avatar: { width: 45, height: 45, borderRadius: 22.5, borderWidth: 2, borderColor: COLORS.primary },
   welcomeText: { fontSize: 10, color: '#888', fontWeight: '700' },
   userName: { fontSize: 18, fontWeight: 'bold' },
-  notifButton: { width: 45, height: 45, backgroundColor: '#f5f5f5', borderRadius: 22.5, alignItems: 'center', justifyContent: 'center' },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginTop: 20 },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold' },
+  notifButton: { 
+    width: 45, 
+    height: 45, 
+    borderRadius: 22.5, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  sectionHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    marginTop: 20 
+  },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold' }, // Color se maneja dinámico
   verTodas: { color: COLORS.primary, fontWeight: 'bold' },
   horizontalScroll: { paddingLeft: 20, marginTop: 15 },
   petCard: { 
-    width: 200, // Un poco más angosta para que se vean varias
-    backgroundColor: '#fff', 
+    width: 180, 
     padding: 12, 
     borderRadius: 16, 
     borderWidth: 1, 
-    borderColor: '#f0f0f0', 
     flexDirection: 'row', 
     alignItems: 'center', 
     marginRight: 15, 
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 5,
   },
-  petImageContainer: { width: 70, height: 70, borderRadius: 35, borderWidth: 2, borderColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', marginRight: 15 },
-  petImageInternal: { width: 62, height: 62, borderRadius: 31 },
-  petName: { fontSize: 16, fontWeight: 'bold' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', marginTop: 5 },
-  statusText: { fontSize: 9, color: COLORS.primary, fontWeight: 'bold', marginLeft: 4 },
-  filterTabs: { flexDirection: 'row', paddingHorizontal: 20, marginTop: 20, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  filterTab: { paddingBottom: 10, marginRight: 20, color: '#aaa', fontWeight: 'bold' },
-  activeFilter: { color: COLORS.primary, borderBottomWidth: 2, borderBottomColor: COLORS.primary },
-  appointmentCard: { margin: 20, padding: 15, backgroundColor: '#fff', borderRadius: 20, borderWidth: 1, borderColor: '#f0f0f0', elevation: 3 },
+  petName: { 
+    fontSize: 15,
+    fontWeight: 'bold',
+    flex: 1, 
+  },
+  statusBadge: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginTop: 5,
+    flex: 1, 
+  },
+  statusText: { 
+    fontSize: 10, 
+    color: COLORS.primary, 
+    fontWeight: 'bold', 
+    marginLeft: 4,
+    flexShrink: 1,
+  },
+  filterTabs: { 
+    flexDirection: 'row', 
+    paddingHorizontal: 20, 
+    marginTop: 20, 
+    marginBottom: 5  
+  },
+  appointmentCard: { 
+    margin: 10, 
+    padding: 15, 
+    borderRadius: 20, 
+    borderWidth: 1, 
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  badgeAceptada: { backgroundColor: COLORS.primary, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 },
+  badgeAceptada: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 },
   badgeText: { color: '#fff', fontSize: 9, fontWeight: 'bold' },
-  petLabel: { marginLeft: 5, color: '#888', fontSize: 12 },
+  petLabel: { marginLeft: 5, fontSize: 12 },
   serviceTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 10 },
   infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  infoText: { marginLeft: 8, color: '#555', fontSize: 14 },
-  serviceImage: { width: 80, height: 80, borderRadius: 12 },
+  infoText: { 
+  marginLeft: 8, 
+  fontSize: 14 
+},
+emptyText: { // <--- Asegúrate que este nombre coincida
+    color: 'gray',
+    fontSize: 16,
+  },
   cardBody: { flexDirection: 'row', justifyContent: 'space-between' },
-  cardFooter: { flexDirection: 'row', marginTop: 15, borderTopWidth: 1, borderTopColor: '#f9f9f9', paddingTop: 15 },
-  btnDetalles: { flex: 1, height: 45, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: '#33774033', marginRight: 10 },
-  btnReagendar: { flex: 1, height: 45, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: COLORS.primary },
+  cardFooter: { 
+    flexDirection: 'row', 
+    marginTop: 15, 
+    borderTopWidth: 1, 
+    paddingTop: 15 
+  },
+  btnDetalles: { 
+    flex: 1, 
+    height: 45, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    borderRadius: 12, 
+    borderWidth: 1, 
+    marginRight: 10 
+  },
   btnTextPrimary: { color: COLORS.primary, fontWeight: 'bold', marginLeft: 5 },
-  btnTextWhite: { color: '#fff', fontWeight: 'bold', marginLeft: 5 },
-  fab: { position: 'absolute', bottom: 20, right: 20, backgroundColor: COLORS.primary, flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15, borderRadius: 20, alignItems: 'center', elevation: 5 },
+  fab: { 
+    position: 'absolute', 
+    bottom: 20, 
+    right: 20, 
+    backgroundColor: COLORS.primary, 
+    flexDirection: 'row', 
+    paddingHorizontal: 20, 
+    paddingVertical: 15, 
+    borderRadius: 20, 
+    alignItems: 'center', 
+    elevation: 5 
+  },
   fabText: { color: '#fff', fontWeight: 'bold', marginLeft: 10 },
   avatarPlaceholder: {
     width: 45,
     height: 45,
     borderRadius: 22.5,
-    backgroundColor: COLORS.primary + '20', 
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: COLORS.primary,
-    marginRight: 12, // Espacio entre círculo y texto de bienvenida
+    marginRight: 12,
   },
   avatarInitial: {
-    fontSize: 20, // Bajamos de 30 a 20 para que quepa bien
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
@@ -245,21 +485,49 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: COLORS.primary + '15', // Verde muy clarito
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 15, // Espacio con el nombre de la mascota
+    marginRight: 15,
     borderWidth: 1,
-    borderColor: COLORS.primary + '30', // Borde sutil
+    borderColor: COLORS.primary + '30',
   },
   serviceIconContainer: {
-  width: 120, // Lo bajé un poco de 60 para que no sea tan grande
-  height: 80,
-  borderRadius: 30,
-  backgroundColor: COLORS.primary + '15',
-  justifyContent: 'center',
-  alignItems: 'center',
-  alignSelf: 'center', // <--- Importante para que se centre verticalmente con el texto
-  marginLeft: 10,
+    width: 60,
+    height: 60,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginLeft: 10,
+  },
+  btnCancelar: {
+    borderColor: '#FF444433',
+    marginRight: 0,
+  },
+  btnTextCancelar: {
+    color: '#FF4444',
+    fontWeight: 'bold',
+    marginLeft: 5,
+  },
+  filterTabText: { 
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase'
+  },
+  activeFilterText: { 
+    color: '#fff' 
+  },
+  filterTabContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+    marginBottom: 5
+  },
+  activeTabContainer: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+    elevation: 3,
   },
 });

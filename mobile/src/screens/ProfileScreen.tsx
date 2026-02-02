@@ -35,17 +35,12 @@ export const ProfileScreen = ({ navigation }: any) => {
         
         <View style={styles.profileImageSection}>
           <View style={styles.imageWrapper}>
-            {/* Reemplazamos Image por el círculo con inicial */}
             <View style={styles.profileAvatarPlaceholder}>
               <Text style={styles.profileAvatarInitial}>
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
               </Text>
             </View>
-            {/* Comentamos o eliminamos el botón de cámara si no hay fotos aún */}
-            {/* <TouchableOpacity style={styles.cameraButton}>
-              <MaterialIcons name="photo-camera" size={16} color="#fff" />
-            </TouchableOpacity> 
-            */}
+        
           </View>
           <Text style={[styles.profileName, { color: dynamicColors.text }]}>
             {user?.username || 'Usuario'}
