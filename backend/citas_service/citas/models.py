@@ -201,4 +201,66 @@ class Cita(models.Model):
             raise ValidationError("No se puede marcar como no asistió una cita finalizada")
         self.estado = EstadoCita.NO_ASISTIO
         self.save(update_fields=['estado', 'actualizada_en'])
+    
+    def crear_notificacion(self, tipo: str, mensaje: str = None):
+        """Crea una notificación para el peluquero asignado a la cita.
+        
+        Args:
+            tipo: Tipo de notificación (del enum TipoNotificacion)
+            mensaje: Mensaje personalizado (si es None, se genera automáticamente)
+        """
+        if mensaje is None:
+            # Generar mensaje automático según el tipo
+            mensajes_por_tipo = {
+                TipoNotificacion.NUEVA_CITA: f"Nueva cita agendada: {self.mascota.nombre} el {self.fecha} a las {self.hora_inicio}",
+                TipoNotificacion.CITA_CONFIRMADA: f"Cita confirmada: {self.mascota.nombre} el {self.fecha}",
+                TipoNotificacion.CITA_CANCELADA: f"Cita cancelada: {self.mascota.nombre} del {self.fecha}",
+                TipoNotificacion.CITA_REPROGRAMADA: f"Cita reprogramada: {self.mascota.nombre} para el {self.fecha}",
+                TipoNotificacion.RECORDATORIO: f"Recordatorio: Cita con {self.mascota.nombre} hoy a las {self.hora_inicio}",
+            }
+            mensaje = mensajes_por_tipo.get(tipo, f"Notificación sobre cita #{self.id}")
+        
+        notificacion = NotificacionPeluquero.objects.create(
+            peluquero_id=self.peluquero_id,
+            cita=self,
+            tipo=tipo,
+            mensaje=mensaje
+        )
+        return notificacion
 
+
+class TipoNotificacion(models.TextChoices):
+    NUEVA_CITA = 'NUEVA_CITA', 'Nueva Cita'
+    CITA_CONFIRMADA = 'CITA_CONFIRMADA', 'Cita Confirmada'
+    CITA_CANCELADA = 'CITA_CANCELADA', 'Cita Cancelada'
+    CITA_REPROGRAMADA = 'CITA_REPROGRAMADA', 'Cita Reprogramada'
+    RECORDATORIO = 'RECORDATORIO', 'Recordatorio de Cita'
+
+
+class NotificacionPeluquero(models.Model):
+    """
+    Notificaciones para peluqueros sobre eventos de citas.
+    Se crea automáticamente cuando:
+    - Se agenda una nueva cita
+    - Se confirma una cita
+    - Se cancela una cita
+    - Se aproxima la cita (recordatorio)
+    """
+    peluquero_id = models.IntegerField(help_text="ID del peluquero (User) desde usuario_service")
+    cita = models.ForeignKey(Cita, on_delete=models.CASCADE, related_name='notificaciones')
+    tipo = models.CharField(max_length=20, choices=TipoNotificacion.choices)
+    mensaje = models.TextField()
+    leida = models.BooleanField(default=False)
+    creada_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Notificación Peluquero"
+        verbose_name_plural = "Notificaciones Peluqueros"
+        ordering = ['-creada_en']
+        indexes = [
+            models.Index(fields=['peluquero_id', '-creada_en']),
+            models.Index(fields=['peluquero_id', 'leida']),
+        ]
+    
+    def __str__(self):
+        return f"Notificación para peluquero {self.peluquero_id}: {self.get_tipo_display()}"

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { mascotasService, citasService, authService, Mascota, Servicio } from '../services';
-import type { Horario } from '../services/citasService';
+import { mascotasService, citasService, authService, Mascota } from '../services';
+import type { Horario, Servicio } from '../services/citasService';
 
 const steps = ["Servicio", "Mascota", "Peluquero", "Fecha y Hora", "Confirmación"];
 

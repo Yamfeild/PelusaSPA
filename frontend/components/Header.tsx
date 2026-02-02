@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { citasService } from '../services';
+import { citasService, notificacionService } from '../services';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -9,10 +9,14 @@ const Header: React.FC = () => {
   const [isDark, setIsDark] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showPeluqueroNotifications, setShowPeluqueroNotifications] = useState(false);
   const [upcomingCount, setUpcomingCount] = useState(0);
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+  const [notificacionesCount, setNotificacionesCount] = useState(0);
+  const [peluqueroNotificaciones, setPeluqueroNotificaciones] = useState<any[]>([]);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const notificationsRef = useRef<HTMLDivElement | null>(null);
+  const peluqueroNotificationsRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,6 +64,29 @@ const Header: React.FC = () => {
     }
   }, [isAuthenticated, user]);
 
+  // Cargar notificaciones para peluqueros
+  useEffect(() => {
+    if (isAuthenticated && user?.rol === 'PELUQUERO') {
+      loadNotificacionesCount();
+      
+      // Recargar cada 30 segundos
+      const interval = setInterval(loadNotificacionesCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, user]);
+
+  const loadNotificacionesCount = async () => {
+    try {
+      const count = await notificacionService.obtenerCantidadNoLeidas();
+      setNotificacionesCount(count);
+      // También cargar las notificaciones no leídas
+      const notificaciones = await notificacionService.obtenerNotificacionesNoLeidas();
+      setPeluqueroNotificaciones(Array.isArray(notificaciones) ? notificaciones : notificaciones.results || []);
+    } catch (error) {
+      console.error('Error cargando notificaciones:', error);
+    }
+  };
+
   const loadUpcomingAppointments = async () => {
     try {
       const data = await citasService.getCitasProximas(24);
@@ -71,15 +98,18 @@ const Header: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!showUserMenu) return;
+    if (!showUserMenu && !showPeluqueroNotifications) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setShowUserMenu(false);
       }
+      if (peluqueroNotificationsRef.current && !peluqueroNotificationsRef.current.contains(event.target as Node)) {
+        setShowPeluqueroNotifications(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showUserMenu]);
+  }, [showUserMenu, showPeluqueroNotifications]);
 
   // Cerrar notificaciones al hacer clic afuera
   useEffect(() => {
@@ -225,6 +255,125 @@ const Header: React.FC = () => {
                         onClick={() => {
                           navigate('/notificaciones');
                           setShowNotifications(false);
+                        }}
+                        className="flex-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2 px-2 rounded hover:bg-primary/10"
+                      >
+                        Ver todo →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Notificaciones para peluqueros */}
+            {isAuthenticated && user?.rol === 'PELUQUERO' && (
+              <div className="relative" ref={peluqueroNotificationsRef}>
+                <button 
+                  onClick={() => setShowPeluqueroNotifications(!showPeluqueroNotifications)}
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                    notificacionesCount > 0
+                      ? 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                      : 'text-subtext-light dark:text-subtext-dark hover:bg-primary/20 hover:text-primary'
+                  }`}
+                  title={notificacionesCount > 0 ? `${notificacionesCount} notificación(es) no leída(s)` : 'Sin notificaciones'}
+                >
+                  <span className="material-symbols-outlined">
+                    {notificacionesCount > 0 ? 'notifications_active' : 'notifications_none'}
+                  </span>
+                  {notificacionesCount > 0 && (
+                    <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
+                      {notificacionesCount > 9 ? '9+' : notificacionesCount}
+                    </span>
+                  )}
+                </button>
+
+                {showPeluqueroNotifications && (
+                  <div className="absolute right-0 mt-3 w-96 max-h-96 overflow-y-auto rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-card-dark shadow-lg z-50">
+                    <div className="bg-primary/10 dark:bg-primary/20 px-4 py-3 border-b border-border-light dark:border-border-dark">
+                      <h3 className="font-semibold text-text-light dark:text-text-dark">Notificaciones</h3>
+                      <p className="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                        {notificacionesCount} no leída(s)
+                      </p>
+                    </div>
+
+                    {peluqueroNotificaciones && peluqueroNotificaciones.length > 0 ? (
+                      <div className="divide-y divide-border-light dark:divide-border-dark">
+                        {peluqueroNotificaciones.map((notif) => {
+                          const tipoColors = {
+                            'NUEVA_CITA': 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30',
+                            'CITA_CONFIRMADA': 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30',
+                            'CITA_CANCELADA': 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30',
+                            'CITA_REPROGRAMADA': 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/30',
+                            'RECORDATORIO': 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30'
+                          };
+
+                          return (
+                            <div 
+                              key={notif.id}
+                              className={`px-4 py-3 hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer transition-colors ${
+                                !notif.leida ? 'bg-blue-50 dark:bg-blue-950/20' : ''
+                              }`}
+                              onClick={() => notificacionService.marcarComoLeida(notif.id).then(() => loadNotificacionesCount())}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border ${tipoColors[notif.tipo_display as keyof typeof tipoColors] || 'bg-primary/20 text-primary border-primary/30'}`}>
+                                  <span className="material-symbols-outlined text-sm">
+                                    {notif.tipo_display === 'NUEVA_CITA' && 'add_circle'}
+                                    {notif.tipo_display === 'CITA_CONFIRMADA' && 'check_circle'}
+                                    {notif.tipo_display === 'CITA_CANCELADA' && 'cancel'}
+                                    {notif.tipo_display === 'CITA_REPROGRAMADA' && 'schedule'}
+                                    {notif.tipo_display === 'RECORDATORIO' && 'notifications'}
+                                  </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-text-light dark:text-text-dark truncate">
+                                    {notif.cita_info?.mascota_nombre || 'Mascota'}
+                                  </p>
+                                  <p className="text-xs text-subtext-light dark:text-subtext-dark mt-1 line-clamp-2">
+                                    {notif.mensaje}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className="material-symbols-outlined text-xs text-primary">schedule</span>
+                                    <span className="text-xs text-subtext-light dark:text-subtext-dark">
+                                      {notif.cita_info?.fecha} {notif.cita_info?.hora}
+                                    </span>
+                                  </div>
+                                  <span className={`inline-block text-xs font-semibold mt-2 px-2 py-1 rounded border ${
+                                    notif.cita_info?.estado === 'CONFIRMADA' 
+                                      ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30'
+                                      : notif.cita_info?.estado === 'PENDIENTE'
+                                      ? 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/30'
+                                      : 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/30'
+                                  }`}>
+                                    {notif.cita_info?.estado}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-6 text-center text-subtext-light dark:text-subtext-dark">
+                        <p className="text-sm">No hay notificaciones</p>
+                      </div>
+                    )}
+
+                    <div className="bg-background-light dark:bg-background-dark px-4 py-3 border-t border-border-light dark:border-border-dark flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => {
+                          notificacionService.marcarTodasComoLeidas().then(() => loadNotificacionesCount());
+                        }}
+                        className="flex-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2 px-2 rounded hover:bg-primary/10"
+                        title="Marcar todas como leídas"
+                      >
+                        ✓ Marcar todo
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/notificaciones');
+                          setShowPeluqueroNotifications(false);
                         }}
                         className="flex-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2 px-2 rounded hover:bg-primary/10"
                       >

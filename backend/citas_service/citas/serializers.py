@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Cita, Horario, Mascota, EstadoCita, Servicio
+from .models import Cita, Horario, Mascota, EstadoCita, Servicio, NotificacionPeluquero, TipoNotificacion
 from datetime import datetime, timedelta
 import requests
 from django.conf import settings
@@ -248,3 +248,26 @@ class CitaDetailSerializer(serializers.ModelSerializer):
             "nombre": "Peluquero"  # Placeholder
         }
 
+
+class NotificacionPeluqueroSerializer(serializers.ModelSerializer):
+    """Serializer para notificaciones de peluqueros."""
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    cita_info = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = NotificacionPeluquero
+        fields = [
+            'id', 'peluquero_id', 'cita', 'cita_info', 'tipo', 'tipo_display',
+            'mensaje', 'leida', 'creada_en'
+        ]
+        read_only_fields = ['id', 'creada_en']
+    
+    def get_cita_info(self, obj):
+        """Información simplificada de la cita asociada."""
+        return {
+            'id': obj.cita.id,
+            'mascota_nombre': obj.cita.mascota.nombre,
+            'fecha': str(obj.cita.fecha),
+            'hora': str(obj.cita.hora_inicio),
+            'estado': obj.cita.estado,
+        }

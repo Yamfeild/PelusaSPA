@@ -3,14 +3,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.exceptions import ValidationError
-from .models import Cita, Horario, Mascota, EstadoCita, Servicio
+from .models import Cita, Horario, Mascota, EstadoCita, Servicio, NotificacionPeluquero, TipoNotificacion
 from .serializers import (
     CitaSerializer,
     CitaCreateSerializer,
     CitaDetailSerializer,
     HorarioSerializer,
     MascotaSerializer,
-    ServicioSerializer
+    ServicioSerializer,
+    NotificacionPeluqueroSerializer
 )
 
 
@@ -254,7 +255,9 @@ class CitaViewSet(viewsets.ModelViewSet):
             raise ValidationError(f"Solo los clientes pueden agendar citas. Tu rol es: {self.request.user.rol}")
         
         print("✅ Validación de rol exitosa - Usuario es CLIENTE")
-        serializer.save()
+        cita = serializer.save()
+        # Crear notificación de nueva cita para el peluquero
+        cita.crear_notificacion(TipoNotificacion.NUEVA_CITA)
     
     @action(detail=True, methods=['post'], permission_classes=[IsPeluquero])
     def cancelar(self, request, pk=None):
@@ -272,6 +275,8 @@ class CitaViewSet(viewsets.ModelViewSet):
         # Cancelar
         try:
             cita.cancelar()
+            # Crear notificación de cancelación
+            cita.crear_notificacion(TipoNotificacion.CITA_CANCELADA)
             return Response(
                 {"message": "Cita cancelada exitosamente"},
                 status=status.HTTP_200_OK
@@ -300,6 +305,8 @@ class CitaViewSet(viewsets.ModelViewSet):
         # Confirmar
         try:
             cita.confirmar()
+            # Crear notificación de confirmación
+            cita.crear_notificacion(TipoNotificacion.CITA_CONFIRMADA)
             return Response(
                 {"message": "Cita confirmada exitosamente"},
                 status=status.HTTP_200_OK
@@ -572,4 +579,132 @@ class CitaViewSet(viewsets.ModelViewSet):
             "count": len(citas_proximas),
             "horas_adelante": horas,
             "citas": serializer.data
+        })
+
+class NotificacionViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar notificaciones de peluqueros.
+    - GET: Lista notificaciones del peluquero actual
+    - mark_as_read: Marcar notificación como leída
+    - mark_all_read: Marcar todas como leídas
+    - unread_count: Contar notificaciones no leídas
+    - upcoming_reminders: Generar recordatorios de citas próximas
+    """
+    serializer_class = NotificacionPeluqueroSerializer
+    permission_classes = [IsPeluquero]
+    
+    def get_queryset(self):
+        """Obtener notificaciones del peluquero autenticado."""
+        peluquero_id = getattr(self.request.user, 'id', None)
+        if not peluquero_id:
+            return NotificacionPeluquero.objects.none()
+        
+        return NotificacionPeluquero.objects.filter(
+            peluquero_id=peluquero_id
+        ).select_related('cita', 'cita__mascota').order_by('-creada_en')
+    
+    @action(detail=True, methods=['post'])
+    def mark_as_read(self, request, pk=None):
+        """Marcar una notificación como leída."""
+        notificacion = self.get_object()
+        notificacion.leida = True
+        notificacion.save()
+        
+        serializer = self.get_serializer(notificacion)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def mark_all_read(self, request):
+        """Marcar todas las notificaciones como leídas."""
+        peluquero_id = getattr(request.user, 'id', None)
+        
+        if not peluquero_id:
+            return Response(
+                {'error': 'No se pudo obtener el ID del peluquero'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        actualizadas = NotificacionPeluquero.objects.filter(
+            peluquero_id=peluquero_id,
+            leida=False
+        ).update(leida=True)
+        
+        return Response({
+            'mensaje': f'{actualizadas} notificaciones marcadas como leídas'
+        })
+    
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        """Obtener cantidad de notificaciones no leídas."""
+        peluquero_id = getattr(request.user, 'id', None)
+        
+        if not peluquero_id:
+            return Response({'count': 0})
+        
+        count = NotificacionPeluquero.objects.filter(
+            peluquero_id=peluquero_id,
+            leida=False
+        ).count()
+        
+        return Response({'count': count})
+    
+    @action(detail=False, methods=['get'])
+    def unread(self, request):
+        """Obtener solo notificaciones no leídas."""
+        queryset = self.get_queryset().filter(leida=False)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def generate_upcoming_reminders(self, request):
+        """Generar recordatorios para citas próximas (hoy/mañana).
+        
+        Este endpoint busca todas las citas del peluquero que sean:
+        - Hoy o mañana
+        - Con estado PENDIENTE o CONFIRMADA
+        - Que no tengan un recordatorio ya creado
+        
+        Y crea automáticamente notificaciones de tipo RECORDATORIO.
+        """
+        from django.utils import timezone
+        
+        peluquero_id = getattr(request.user, 'id', None)
+        if not peluquero_id:
+            return Response(
+                {'error': 'No se pudo obtener el ID del peluquero'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        now = timezone.now()
+        hoy = now.date()
+        manana = hoy + timezone.timedelta(days=1)
+        
+        # Buscar citas para hoy y mañana
+        citas_proximas = Cita.objects.filter(
+            peluquero_id=peluquero_id,
+            fecha__in=[hoy, manana],
+            estado__in=[EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA]
+        )
+        
+        recordatorios_creados = 0
+        for cita in citas_proximas:
+            # Verificar que no exista un recordatorio ya creado
+            existe_recordatorio = NotificacionPeluquero.objects.filter(
+                peluquero_id=peluquero_id,
+                cita=cita,
+                tipo=TipoNotificacion.RECORDATORIO
+            ).exists()
+            
+            if not existe_recordatorio:
+                # Generar mensaje de recordatorio personalizado
+                es_hoy = cita.fecha == hoy
+                fecha_text = "hoy" if es_hoy else "mañana"
+                mensaje = f"Recordatorio: Cita con {cita.mascota.nombre} {fecha_text} a las {cita.hora_inicio}"
+                
+                cita.crear_notificacion(TipoNotificacion.RECORDATORIO, mensaje)
+                recordatorios_creados += 1
+        
+        return Response({
+            'mensaje': f'Se crearon {recordatorios_creados} recordatorios para citas próximas',
+            'recordatorios_creados': recordatorios_creados
         })

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { citasService, Cita } from '../services/citasService';
+import { notificacionService } from '../services/notificacionService';
 import { authService } from '../services';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,6 +16,7 @@ const PeluqueroPanel: React.FC = () => {
   const [filtroFecha, setFiltroFecha] = useState<'HOY' | 'PROXIMOS' | 'TODAS'>('PROXIMOS');
   const [showEditModal, setShowEditModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [notificacionesCount, setNotificacionesCount] = useState(0);
   const [editForm, setEditForm] = useState({
     nombre: '',
     apellido: '',
@@ -24,6 +26,14 @@ const PeluqueroPanel: React.FC = () => {
 
   useEffect(() => {
     cargarCitas();
+  }, []);
+
+  useEffect(() => {
+    // Cargar cantidad de notificaciones no leídas
+    loadNotificacionesCount();
+    // Auto-refresh cada 30 segundos
+    const interval = setInterval(loadNotificacionesCount, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -78,6 +88,15 @@ const PeluqueroPanel: React.FC = () => {
       console.error('Error al cargar citas:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadNotificacionesCount = async () => {
+    try {
+      const count = await notificacionService.obtenerCantidadNoLeidas();
+      setNotificacionesCount(count);
+    } catch (error) {
+      console.error('Error loading notification count:', error);
     }
   };
 
