@@ -20,6 +20,9 @@ const Dashboard: React.FC = () => {
   });
   const [saving, setSaving] = useState(false);
   const [historialEstado, setHistorialEstado] = useState<'ALL' | 'CANCELADA' | 'FINALIZADA' | 'NO_ASISTIO'>('ALL');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [mascotaToDelete, setMascotaToDelete] = useState<Mascota | null>(null);
+  const [deleting, setDeleting] = useState(false);
   
   const { user, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
@@ -131,6 +134,28 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleDeleteMascota = async () => {
+    if (!mascotaToDelete) return;
+    
+    setDeleting(true);
+    try {
+      await mascotasService.deleteMascota(mascotaToDelete.id);
+      await loadData(); // Recargar datos
+      setShowDeleteModal(false);
+      setMascotaToDelete(null);
+    } catch (err: any) {
+      console.error('Error al eliminar mascota:', err);
+      setError('Error al eliminar la mascota');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const confirmDeleteMascota = (mascota: Mascota) => {
+    setMascotaToDelete(mascota);
+    setShowDeleteModal(true);
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -233,6 +258,60 @@ const Dashboard: React.FC = () => {
 
       {/* Notification Banner */}
       <NotificationBanner />
+
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteModal && mascotaToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => !deleting && setShowDeleteModal(false)}>
+          <div className="bg-white dark:bg-card-dark rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-text-light dark:text-text-dark">Eliminar Mascota</h3>
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="text-subtext-light dark:text-subtext-dark hover:text-text-light disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-text-light dark:text-text-dark mb-2">
+                ¿Estás seguro de que deseas eliminar a <span className="font-bold">{mascotaToDelete.nombre}</span>?
+              </p>
+              <p className="text-sm text-subtext-light dark:text-subtext-dark">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:bg-background-light dark:hover:bg-white/5 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteMascota}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 flex items-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <span className="animate-spin material-symbols-outlined text-sm">progress_activity</span>
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">delete</span>
+                    Eliminar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Editar Perfil */}
       {showEditModal && (
@@ -365,7 +444,7 @@ const Dashboard: React.FC = () => {
                                 <div className="flex flex-col gap-1">
                                     <p className={`text-sm font-medium ${getEstadoColor(cita.estado)}`}>{cita.estado}</p>
                                     <p className="text-text-light dark:text-text-dark text-lg font-bold">
-                                      {cita.notas ? cita.notas.replace('Servicio: ', '') : 'Cita'} para {cita.mascota_nombre || `Mascota #${cita.mascota}`}
+                                      {'Cita'} para {cita.mascota_nombre || `Mascota #${cita.mascota}`}
                                     </p>
                                     <p className="text-subtext-light dark:text-subtext-dark text-sm">
                                       {formatearFecha(cita.fecha, cita.hora_inicio)}
@@ -482,9 +561,17 @@ const Dashboard: React.FC = () => {
                                   <p className="text-subtext-light dark:text-subtext-dark text-sm">{mascota.edad} años</p>
                                 )}
                             </div>
-                            <Link to={`/edit-pet/${mascota.id}`} className="p-2 rounded-md hover:bg-background-light dark:hover:bg-white/5 text-subtext-light dark:text-subtext-dark transition-colors">
-                                <span className="material-symbols-outlined text-lg">edit</span>
-                            </Link>
+                            <div className="flex gap-1">
+                                <Link to={`/edit-pet/${mascota.id}`} className="p-2 rounded-md hover:bg-background-light dark:hover:bg-white/5 text-subtext-light dark:text-subtext-dark transition-colors">
+                                    <span className="material-symbols-outlined text-lg">edit</span>
+                                </Link>
+                                <button 
+                                  onClick={() => confirmDeleteMascota(mascota)}
+                                  className="p-2 rounded-md hover:bg-red-500/10 text-red-500 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )) : (

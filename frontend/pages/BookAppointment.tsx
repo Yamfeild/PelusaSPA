@@ -224,7 +224,8 @@ const BookAppointment: React.FC = () => {
       const dayOfWeek = selectedDateObj.getDay();
       // Ajustar porque JS usa 0=Domingo pero nosotros usamos 0=Lunes
       const dayOfWeekAdjusted = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
+      
+      console.log(`📅 Fecha seleccionada: ${selectedDate}, JS Day: ${dayOfWeek}, Backend Day: ${dayOfWeekAdjusted}`);
       // Bloquear días pasados completos
       if (selectedDateObj < todayMidnight) {
         setAvailableHorarios([]);
@@ -237,9 +238,12 @@ const BookAppointment: React.FC = () => {
         h.dia_semana === dayOfWeekAdjusted && 
         h.activo
       );
+      
+      console.log(`🔍 Buscando horarios para peluquero ${selectedPeluquero} en día ${dayOfWeekAdjusted}`);
 
       if (peluqueroHorarios.length === 0) {
-        console.log(`🔍 Sin horarios para peluquero ${selectedPeluquero} en día ${dayOfWeekAdjusted}`);
+        console.log(`❌ Sin horarios para peluquero ${selectedPeluquero} en día ${dayOfWeekAdjusted} (${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'][dayOfWeekAdjusted]})`);
+        console.log(`📋 Horarios disponibles del peluquero ${selectedPeluquero}:`, horarios.filter(h => h.peluquero_id.toString() === selectedPeluquero && h.activo));
         setAvailableHorarios([]);
         return;
       }
