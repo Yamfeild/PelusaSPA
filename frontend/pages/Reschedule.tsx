@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { citasService, Cita } from '../services/citasService';
 import { mascotasService } from '../services/mascotasService';
+import Toast from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 import type { Horario, Servicio } from '../services/citasService';
 
 const Reschedule: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { messages, removeToast, success, error: showError } = useToast();
   
   const [cita, setCita] = useState<Cita | null>(null);
   const [mascotaNombre, setMascotaNombre] = useState<string>('');
@@ -239,7 +242,10 @@ const Reschedule: React.FC = () => {
         hora_fin: horaFin
       });
 
-      navigate('/dashboard');
+      success('Cita reprogramada correctamente');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 500);
     } catch (err: any) {
       setError(err.message || 'Error al reagendar la cita');
       setSubmitting(false);
@@ -474,6 +480,9 @@ const Reschedule: React.FC = () => {
             </div>
         </div>
       </div>
+      
+      {/* Toast Notifications */}
+      <Toast messages={messages} onRemove={removeToast} />
     </div>
   );
 };

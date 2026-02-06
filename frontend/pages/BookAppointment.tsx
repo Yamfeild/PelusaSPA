@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { mascotasService, citasService, authService, Mascota } from '../services';
+import Toast from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 import type { Horario, Servicio } from '../services/citasService';
 
 const steps = ["Servicio", "Mascota", "Peluquero", "Fecha y Hora", "Confirmación"];
@@ -10,6 +12,7 @@ const BookAppointment: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { messages, removeToast, success, error: showError } = useToast();
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [peluqueros, setPeluqueros] = useState<any[]>([]);
@@ -401,8 +404,11 @@ const BookAppointment: React.FC = () => {
         hora_fin: horaFin
       });
 
+      success('Cita agendada correctamente');
       // Navegar al dashboard después de crear la cita
-      navigate('/dashboard');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 500);
     } catch (err: any) {
       console.error('❌ Error al crear cita:', err);
       console.error('📄 Error response:', err.response?.data);
@@ -817,6 +823,9 @@ const BookAppointment: React.FC = () => {
             </aside>
         </div>
       </div>
+      
+      {/* Toast Notifications */}
+      <Toast messages={messages} onRemove={removeToast} />
     </div>
   );
 };

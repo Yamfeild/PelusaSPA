@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mascotasService } from '../services';
+import Toast from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 
 const RegisterPet: React.FC = () => {
   const navigate = useNavigate();
+  const { messages, removeToast, success, error: showError } = useToast();
   const [nombre, setNombre] = useState('');
   const [raza, setRaza] = useState('');
   const [edad, setEdad] = useState('');
@@ -21,10 +24,15 @@ const RegisterPet: React.FC = () => {
         raza,
         edad: parseInt(edad) || 0,
       });
-      navigate('/dashboard');
+      success(`¡${nombre} registrada correctamente!`);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 500);
     } catch (err: any) {
       console.error('Error al registrar mascota:', err);
-      setError(err.response?.data?.error || 'Error al registrar la mascota');
+      const errorMsg = err.response?.data?.error || 'Error al registrar la mascota';
+      showError(errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -113,6 +121,9 @@ const RegisterPet: React.FC = () => {
             </div>
         </form>
       </div>
+
+      {/* Toast Notifications */}
+      <Toast messages={messages} onRemove={removeToast} />
     </div>
   );
 };

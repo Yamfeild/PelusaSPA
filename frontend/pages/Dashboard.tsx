@@ -3,7 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { mascotasService, citasService, authService, Mascota, Cita } from '../services';
 import NotificationBanner from '../components/NotificationBanner';
+import Toast from '../components/Toast';
 import { notificationService } from '../services/notificationService';
+import { useToast } from '../hooks/useToast';
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
@@ -23,9 +25,13 @@ const Dashboard: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [mascotaToDelete, setMascotaToDelete] = useState<Mascota | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [citaToCancel, setCitaToCancel] = useState<number | null>(null);
+  const [canceling, setCanceling] = useState(false);
   
   const { user, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const { messages, removeToast, success, error: showError } = useToast();
 
   useEffect(() => {
     if (user?.rol === 'PELUQUERO') {
@@ -118,19 +124,27 @@ const Dashboard: React.FC = () => {
   const displayEmail = user?.email || user?.username || '-';
   const displayPhone = user?.persona?.telefono || user?.persona?.celular || '';
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+
+
+  const handleCancelarCita = (citaId: number) => {
+    setCitaToCancel(citaId);
+    setShowCancelModal(true);
   };
 
-  const handleCancelarCita = async (citaId: number) => {
-    if (!confirm('¿Estás seguro de que quieres cancelar esta cita?')) return;
+  const confirmCancelarCita = async () => {
+    if (!citaToCancel) return;
     
+    setCanceling(true);
     try {
-      await citasService.cancelarCita(citaId);
-      await loadData(); // Recargar datos
+      await citasService.cancelarCita(citaToCancel);
+      success('Cita cancelada correctamente');
+      await loadData();
+      setShowCancelModal(false);
+      setCitaToCancel(null);
     } catch (err: any) {
-      alert('Error al cancelar la cita');
+      showError('Error al cancelar la cita');
+    } finally {
+      setCanceling(false);
     }
   };
 
@@ -140,12 +154,13 @@ const Dashboard: React.FC = () => {
     setDeleting(true);
     try {
       await mascotasService.deleteMascota(mascotaToDelete.id);
-      await loadData(); // Recargar datos
+      success(`${mascotaToDelete.nombre} ha sido eliminada correctamente`);
+      await loadData();
       setShowDeleteModal(false);
       setMascotaToDelete(null);
     } catch (err: any) {
       console.error('Error al eliminar mascota:', err);
-      setError('Error al eliminar la mascota');
+      showError('No se pudo eliminar la mascota. Intenta de nuevo.');
     } finally {
       setDeleting(false);
     }
@@ -161,7 +176,6 @@ const Dashboard: React.FC = () => {
     setSaving(true);
     
     try {
-      // Actualizar el perfil en el backend
       await authService.updateProfile({
         nombre: editForm.nombre,
         apellido: editForm.apellido,
@@ -169,7 +183,6 @@ const Dashboard: React.FC = () => {
         direccion: editForm.direccion || undefined
       });
       
-      // Refrescar el perfil del usuario y rehidratar el formulario
       const profile = await refreshProfile();
       if (profile?.persona) {
         setEditForm({
@@ -182,8 +195,9 @@ const Dashboard: React.FC = () => {
 
       setShowEditModal(false);
       setError('');
+      success('Perfil actualizado correctamente');
     } catch (err: any) {
-      setError(err.message || 'Error al actualizar el perfil');
+      showError(err.message || 'Error al actualizar el perfil');
     } finally {
       setSaving(false);
     }
@@ -305,6 +319,60 @@ const Dashboard: React.FC = () => {
                   <>
                     <span className="material-symbols-outlined text-sm">delete</span>
                     Eliminar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Cancelar Cita */}
+      {showCancelModal && citaToCancel && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => !canceling && setShowCancelModal(false)}>
+          <div className="bg-white dark:bg-card-dark rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-text-light dark:text-text-dark">Cancelar Cita</h3>
+              <button 
+                onClick={() => setShowCancelModal(false)}
+                disabled={canceling}
+                className="text-subtext-light dark:text-subtext-dark hover:text-text-light disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-text-light dark:text-text-dark mb-2">
+                ¿Estás seguro de que deseas cancelar esta cita?
+              </p>
+              <p className="text-sm text-subtext-light dark:text-subtext-dark">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                disabled={canceling}
+                className="px-4 py-2 rounded-lg border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:bg-background-light dark:hover:bg-white/5 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmCancelarCita}
+                disabled={canceling}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 flex items-center gap-2"
+              >
+                {canceling ? (
+                  <>
+                    <span className="animate-spin material-symbols-outlined text-sm">progress_activity</span>
+                    Cancelando...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">event_busy</span>
+                    Confirmar
                   </>
                 )}
               </button>
@@ -630,6 +698,9 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Toast Notifications */}
+      <Toast messages={messages} onRemove={removeToast} />
     </div>
   );
 };
