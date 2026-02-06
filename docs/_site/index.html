@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Pelusas Spa - Documentación del Sistema – 🐾 PelusasSpa</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-142ee824359a6f5439d775f5ee513964.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="docked quarto-light">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Navegación</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción">Introducción</a></li>
+  <li><a href="#ciclo-de-vida-del-desarrollo-de-software-sdlc" id="toc-ciclo-de-vida-del-desarrollo-de-software-sdlc" class="nav-link" data-scroll-target="#ciclo-de-vida-del-desarrollo-de-software-sdlc">Ciclo de Vida del Desarrollo de Software (SDLC)</a></li>
+  <li><a href="#requisitos-del-sistema" id="toc-requisitos-del-sistema" class="nav-link" data-scroll-target="#requisitos-del-sistema">Requisitos del Sistema</a></li>
+  <li><a href="#diseño-y-arquitectura" id="toc-diseño-y-arquitectura" class="nav-link" data-scroll-target="#diseño-y-arquitectura">Diseño y Arquitectura</a></li>
+  <li><a href="#pruebas-del-sistema" id="toc-pruebas-del-sistema" class="nav-link" data-scroll-target="#pruebas-del-sistema">Pruebas del Sistema</a></li>
+  <li><a href="#despliegue-del-sistema" id="toc-despliegue-del-sistema" class="nav-link" data-scroll-target="#despliegue-del-sistema">Despliegue del Sistema</a></li>
+  <li><a href="#guía-de-puesta-en-marcha-integral" id="toc-guía-de-puesta-en-marcha-integral" class="nav-link" data-scroll-target="#guía-de-puesta-en-marcha-integral">Guía de Puesta en Marcha Integral</a></li>
+  <li><a href="#aplicación-móvil-expo-go" id="toc-aplicación-móvil-expo-go" class="nav-link" data-scroll-target="#aplicación-móvil-expo-go">Aplicación Móvil (Expo Go)</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content column-page-right" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Pelusas Spa - Documentación del Sistema</h1>
+</div>
+
+
+
+<div class="quarto-title-meta column-page-right">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level1">
+<h1>Introducción</h1>
+<p>Bienvenido a la documentación de <strong>PelusasSpa</strong>. Este sitio contiene la documentación completa del sistema, organizada por fases del ciclo de vida del software (SDLC), requisitos, arquitectura basada en microservicios, pruebas y despliegue.</p>
+</section>
+<section id="ciclo-de-vida-del-desarrollo-de-software-sdlc" class="level1">
+<h1>Ciclo de Vida del Desarrollo de Software (SDLC)</h1>
+<p>Esta sección describe las etapas iniciales del ciclo de vida del desarrollo del sistema <strong>PelusasSpa</strong>, justificando su creación, objetivos y alcance dentro del contexto de una peluquería canina.</p>
+<section id="visión" class="level2">
+<h2 class="anchored" data-anchor-id="visión">1. Visión</h2>
+<p>PelusasSpa es un sistema web orientado a la gestión integral de una peluquería canina, desarrollado bajo una arquitectura de microservicios desplegados en contenedores. Su objetivo principal es optimizar la administración de citas, mascotas y usuarios, mejorando la eficiencia operativa y la experiencia del cliente.</p>
+</section>
+<section id="necesidad" class="level2">
+<h2 class="anchored" data-anchor-id="necesidad">2. Necesidad</h2>
+<p>Actualmente, la gestión manual de citas, registros de clientes y control de mascotas genera retrasos, errores humanos y desorganización en el proceso operativo. Surge la necesidad de automatizar estas actividades mediante un sistema distribuido que permita escalar, mantener y evolucionar cada funcionalidad de manera independiente.</p>
+</section>
+<section id="alcance" class="level2">
+<h2 class="anchored" data-anchor-id="alcance">3. Alcance</h2>
+<p>El sistema permitirá el registro y autenticación de usuarios, la gestión de mascotas, el agendamiento de citas y la administración del sistema mediante roles definidos (administrador, peluquero y cliente). Esta versión del sistema no contempla pasarela de pagos, facturación ni integraciones externas.</p>
+</section>
+</section>
+<section id="requisitos-del-sistema" class="level1">
+<h1>Requisitos del Sistema</h1>
+<p>Esta sección describe los requisitos funcionales, no funcionales y reglas de negocio del sistema <strong>PelusasSpa</strong>.</p>
+<section id="requisitos-funcionales-rf" class="level2">
+<h2 class="anchored" data-anchor-id="requisitos-funcionales-rf">1. Requisitos Funcionales (RF)</h2>
+<ul>
+<li><strong>RF01 – Registro de Clientes</strong></li>
+<li><strong>RF02 – Gestión de Mascotas</strong></li>
+<li><strong>RF03 – Agendamiento de Citas</strong></li>
+<li><strong>RF04 – Validación de Disponibilidad</strong></li>
+<li><strong>RF05 – Cancelación de Citas por el Cliente</strong></li>
+<li><strong>RF06 – Visualización del Estado de Citas</strong></li>
+<li><strong>RF07 – Registro de Peluqueros</strong> (solo administrador)</li>
+<li><strong>RF08 – Gestión de Horarios de Peluqueros</strong></li>
+<li><strong>RF09 – Visualización Administrativa de Citas</strong></li>
+<li><strong>RF10 – Gestión de Estado de Citas por Peluqueros</strong></li>
+<li><strong>RF11 – Notificaciones de Cambio de Estado</strong></li>
+</ul>
+</section>
+<section id="requisitos-no-funcionales-rnf" class="level2">
+<h2 class="anchored" data-anchor-id="requisitos-no-funcionales-rnf">2. Requisitos No Funcionales (RNF)</h2>
+<ul>
+<li><strong>RNF01 – Seguridad:</strong> JWT, roles, permisos.</li>
+<li><strong>RNF02 – Rendimiento:</strong> Tiempo de respuesta &lt;2s.</li>
+<li><strong>RNF03 – Disponibilidad:</strong> 99%.</li>
+<li><strong>RNF04 – Escalabilidad:</strong> Microservicios.</li>
+<li><strong>RNF05 – Usabilidad:</strong> Interfaz intuitiva.</li>
+<li><strong>RNF06 – Mantenibilidad:</strong> PEP8, REST, documentación.</li>
+<li><strong>RNF07 – Integridad de Datos:</strong> Restricciones y validaciones.</li>
+</ul>
+</section>
+<section id="reglas-de-negocio-rn" class="level2">
+<h2 class="anchored" data-anchor-id="reglas-de-negocio-rn">3. Reglas de Negocio (RN)</h2>
+<ul>
+<li><strong>RN01:</strong> Una mascota no puede tener dos citas el mismo día.</li>
+<li><strong>RN02:</strong> Un cliente solo puede cancelar sus propias citas.</li>
+<li><strong>RN03:</strong> Solo el administrador puede registrar peluqueros.</li>
+<li><strong>RN04:</strong> Los horarios solo pueden ser gestionados por el administrador.</li>
+<li><strong>RN05:</strong> Toda cita debe estar asociada a un peluquero disponible.</li>
+<li><strong>RN06:</strong> Estados permitidos: Pendiente, Confirmada, Cancelada, Finalizada.</li>
+</ul>
+</section>
+</section>
+<section id="diseño-y-arquitectura" class="level1">
+<h1>Diseño y Arquitectura</h1>
+<p>En esta sección se describe el stack tecnológico y la arquitectura del sistema <strong>PelusasSpa</strong>, basada en microservicios desplegados en contenedores, utilizando el modelo C4.</p>
+<section id="tecnologías-frameworks-y-lenguajes-utilizados" class="level2">
+<h2 class="anchored" data-anchor-id="tecnologías-frameworks-y-lenguajes-utilizados">1. Tecnologías, Frameworks y Lenguajes Utilizados</h2>
+<section id="lenguaje-de-programación" class="level3">
+<h3 class="anchored" data-anchor-id="lenguaje-de-programación">Lenguaje de Programación</h3>
+<ul>
+<li><strong>Python 3.11+</strong>: Lenguaje principal para el desarrollo backend basado en Django y Django REST Framework debido a su rapidez de desarrollo, mantenibilidad y ecosistema maduro.</li>
+</ul>
+</section>
+<section id="frameworks-backend" class="level3">
+<h3 class="anchored" data-anchor-id="frameworks-backend">Frameworks Backend</h3>
+<ul>
+<li><strong>Django 5</strong>: Framework principal para la construcción de cada microservicio por su robustez, modularidad y ORM integrado.</li>
+<li><strong>Django REST Framework (DRF)</strong>: Framework utilizado para crear APIs RESTful, proporcionando Serializers, Viewsets, Routers, Autenticación JWT y Control de permisos por roles.</li>
+</ul>
+</section>
+<section id="arquitectura-de-microservicios" class="level3">
+<h3 class="anchored" data-anchor-id="arquitectura-de-microservicios">Arquitectura de Microservicios</h3>
+<p>El sistema se divide en dos servicios independientes:</p>
+<ul>
+<li><strong>UserService</strong>:
+<ul>
+<li>Gestión de usuarios, autenticación, roles (cliente, peluquero, administrador).</li>
+<li>Generación de tokens JWT.</li>
+<li>Manejo de cuentas y permisos.</li>
+</ul></li>
+<li><strong>Cita-Cliente Service</strong> (Cliente + Mascota + Cita + Peluquero):
+<ul>
+<li>Gestión de clientes.</li>
+<li>Gestión de mascotas.</li>
+<li>Agendamiento y validación de citas.</li>
+<li>Gestión de horarios de peluqueros.</li>
+<li>Cambio de estado de citas.</li>
+</ul></li>
+</ul>
+</section>
+<section id="contenedores-y-orquestación" class="level3">
+<h3 class="anchored" data-anchor-id="contenedores-y-orquestación">Contenedores y Orquestación</h3>
+<ul>
+<li><strong>Docker</strong>: Utilizado para empaquetar cada microservicio en contenedores independientes, asegurando que funcionen igual en desarrollo, pruebas y producción.</li>
+<li><strong>Docker Compose</strong>: Permite levantar base de datos, microservicios, API Gateway, redes internas y volúmenes con un solo comando.</li>
+</ul>
+</section>
+<section id="api-gateway" class="level3">
+<h3 class="anchored" data-anchor-id="api-gateway">API Gateway</h3>
+<p><strong>Kong API Gateway</strong> se implementa como el punto de entrada unificado para gestionar el tráfico hacia los microservicios. Sus funciones principales incluyen:</p>
+<ul>
+<li><strong>Ruteo:</strong> Distribución inteligente de solicitudes entre servicios.</li>
+<li><strong>Seguridad:</strong> Centralización de políticas de acceso y protección.</li>
+<li><strong>Control de Tráfico:</strong> Gestión de carga y limitación de tasas (rate limiting).</li>
+<li><strong>Versionado:</strong> Soporte para múltiples versiones de la API simultáneamente.</li>
+</ul>
+<p>Esta capa adicional aporta <strong>escalabilidad</strong> y <strong>desacoplamiento</strong> al sistema.</p>
+</section>
+<section id="autenticación-y-autorización" class="level3">
+<h3 class="anchored" data-anchor-id="autenticación-y-autorización">Autenticación y Autorización</h3>
+<ul>
+<li><strong>JWT (JSON Web Tokens)</strong>: Mecanismo para iniciar sesión, mantener sesiones seguras y transmitir roles de usuario en el token. Utilizado principalmente con <code>djangorestframework-simplejwt</code>.</li>
+</ul>
+</section>
+</section>
+<section id="modelo-c4-contexto" class="level2">
+<h2 class="anchored" data-anchor-id="modelo-c4-contexto">2. Modelo C4 – Contexto</h2>
+<p>El diagrama de contexto muestra la interacción entre los diferentes tipos de usuarios (administrador, peluquero y cliente) y el sistema PelusasSpa como un conjunto de servicios.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/m1.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Diagrama C4 de Contexto</figcaption>
+</figure>
+</div>
+</section>
+<section id="modelo-c4-contenedores" class="level2">
+<h2 class="anchored" data-anchor-id="modelo-c4-contenedores">3. Modelo C4 – Contenedores</h2>
+<p>El diagrama de contenedores representa los principales contenedores que conforman el sistema, incluyendo el frontend web, los microservicios backend y la base de datos.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/m2.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Diagrama C4 de Contenedores</figcaption>
+</figure>
+</div>
+</section>
+<section id="modelo-c4-componentes" class="level2">
+<h2 class="anchored" data-anchor-id="modelo-c4-componentes">4. Modelo C4 – Componentes</h2>
+<p>El diagrama de componentes detalla la estructura interna de cada microservicio, mostrando componentes como gestión de usuarios, mascotas y citas.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/m3.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Diagrama C4 de Componentes</figcaption>
+</figure>
+</div>
+</section>
+<section id="modelo-c4-despliegue" class="level2">
+<h2 class="anchored" data-anchor-id="modelo-c4-despliegue">5. Modelo C4 – Despliegue</h2>
+<p>El diagrama de despliegue describe cómo los microservicios se ejecutan dentro de contenedores y cómo se comunican dentro del entorno de ejecución.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/m4.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Diagrama C4 de Despliegue</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="pruebas-del-sistema" class="level1">
+<h1>Pruebas del Sistema</h1>
+<p>Esta sección describe las estrategias de prueba aplicadas al sistema <strong>PelusasSpa</strong>.</p>
+<section id="pruebas-unitarias" class="level2">
+<h2 class="anchored" data-anchor-id="pruebas-unitarias">1. Pruebas Unitarias</h2>
+<p>Las pruebas unitarias se realizan de manera individual sobre cada microservicio, validando el correcto funcionamiento de sus métodos y lógica de negocio.</p>
+<div class="quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/p1.2.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Pruebas Unitarias - Usuario Service</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/p1.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Pruebas Unitarias - Citas Service</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="pruebas-funcionales" class="level2">
+<h2 class="anchored" data-anchor-id="pruebas-funcionales">2. Pruebas Funcionales</h2>
+<p>Las pruebas funcionales evalúan el comportamiento del sistema completo, verificando la correcta interacción entre los microservicios.</p>
+<div class="quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/PF1.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Flujo de Pruebas Funcionales</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/RF2.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Respuesta Login</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/RF3.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Respuesta Creación</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="despliegue-del-sistema" class="level1">
+<h1>Despliegue del Sistema</h1>
+<section id="entorno-de-despliegue" class="level2">
+<h2 class="anchored" data-anchor-id="entorno-de-despliegue">1. Entorno de Despliegue</h2>
+<p>El sistema PelusasSpa se despliega utilizando contenedores Docker, lo que permite ejecutar cada componente del sistema de manera aislada.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/img1.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Uso de Docker</figcaption>
+</figure>
+</div>
+</section>
+<section id="microservicios-del-sistema" class="level2">
+<h2 class="anchored" data-anchor-id="microservicios-del-sistema">2. Microservicios del Sistema</h2>
+<p>El sistema está compuesto por dos microservicios principales:</p>
+<ul>
+<li><p><strong>Microservicio de Gestión de Usuarios:</strong> Encargado del registro, autenticación y administración de usuarios. <img src=".quarto/img/us.png" class="img-fluid quarto-figure quarto-figure-center" style="width:80.0%" alt="Microservicio Usuarios"></p></li>
+<li><p><strong>Microservicio de Gestión de Citas:</strong> Responsable de la creación, consulta y administración de las citas. <img src=".quarto/img/cs1.png" class="img-fluid quarto-figure quarto-figure-center" style="width:80.0%" alt="Microservicio Citas"></p></li>
+</ul>
+</section>
+<section id="configuración-del-despliegue" class="level2">
+<h2 class="anchored" data-anchor-id="configuración-del-despliegue">3. Configuración del Despliegue</h2>
+<p>El despliegue del sistema utiliza variables de entorno para definir parámetros como puertos y credenciales.</p>
+<div class="quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/citaserver.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Servidor Citas</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/usuarioserver.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Servidor Usuarios</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="guía-de-puesta-en-marcha-integral" class="level1">
+<h1>Guía de Puesta en Marcha Integral</h1>
+<p>Para operar el sistema completo, es necesario seguir un orden de ejecución específico para garantizar la disponibilidad de los servicios antes de iniciar la interfaz de usuario.</p>
+<section id="infraestructura-backend-docker" class="level2">
+<h2 class="anchored" data-anchor-id="infraestructura-backend-docker">1. Infraestructura Backend (Docker)</h2>
+<p>El backend debe iniciarse primero para que la API esté disponible.</p>
+<ol type="1">
+<li><strong>Iniciar Docker Desktop:</strong> Asegúrese de que el motor de Docker esté corriendo.</li>
+<li><strong>Generar y Levantar Contenedores:</strong> En la raíz del proyecto backend, ejecute: <code>bash     docker-compose up --build</code>
+<ul>
+<li>Este comando compila las imágenes de los microservicios y levanta la orquestación definida.</li>
+<li>El <strong>API Gateway</strong> quedará expuesto (generalmente en el puerto <code>8000</code>) para recibir peticiones externas.</li>
+</ul></li>
+</ol>
+</section>
+<section id="conectividad-móvil-expo-go" class="level2">
+<h2 class="anchored" data-anchor-id="conectividad-móvil-expo-go">2. Conectividad Móvil (Expo Go)</h2>
+<p>La comunicación entre el dispositivo móvil (Expo Go) y el backend (Docker en localhost) requiere configuración de red, ya que se ejecutan en entornos separados.</p>
+<section id="arquitectura-de-comunicación" class="level3">
+<h3 class="anchored" data-anchor-id="arquitectura-de-comunicación">Arquitectura de Comunicación</h3>
+<ul>
+<li><strong>Backend:</strong> Corre dentro de contenedores Docker, expuestos al <code>localhost</code> de su computadora.</li>
+<li><strong>Expo Go:</strong> Corre en un dispositivo físico o emulador.</li>
+</ul>
+</section>
+<section id="configuración-de-acceso" class="level3">
+<h3 class="anchored" data-anchor-id="configuración-de-acceso">Configuración de Acceso</h3>
+<p>Para que Expo Go “vea” al backend:</p>
+<ol type="1">
+<li><strong>En Dispositivo Físico (Misma Wi-Fi):</strong>
+<ul>
+<li>Obtenga la <strong>IP Local</strong> de su PC (ej. <code>ipconfig</code> <span class="math inline">\(\to\)</span> <code>192.168.1.15</code>).</li>
+<li>Configure la URL de la API en la app móvil apuntando a esa IP: <code>http://192.168.1.15:8000</code>.</li>
+</ul></li>
+<li><strong>En Emulador Android:</strong>
+<ul>
+<li>Utilice la dirección reservada <code>http://10.0.2.2:8000</code> que redirige al localhost de la PC.</li>
+</ul></li>
+</ol>
+</section>
+</section>
+<section id="ejecución-del-cliente-móvil" class="level2">
+<h2 class="anchored" data-anchor-id="ejecución-del-cliente-móvil">3. Ejecución del Cliente Móvil</h2>
+<p>Una vez el backend está operativo:</p>
+<ol type="1">
+<li>En una nueva terminal, navegue al directorio de la app móvil.</li>
+<li>Ejecute <code>npx expo start</code> para iniciar el servidor de desarrollo (Metro Bundler).</li>
+<li>Escanee el código QR con su celular o presione <code>a</code> (Android) / <code>i</code> (iOS) para abrir el emulador.</li>
+</ol>
+</section>
+</section>
+<section id="aplicación-móvil-expo-go" class="level1">
+<h1>Aplicación Móvil (Expo Go)</h1>
+<p>La solución incluye una aplicación móvil para clientes, desarrollada con React Native y el framework Expo.</p>
+<section id="funcionalidades-principales" class="level2">
+<h2 class="anchored" data-anchor-id="funcionalidades-principales">1. Funcionalidades Principales</h2>
+<p>La app móvil está diseñada para ofrecer una experiencia de usuario fluida y enfocada en las necesidades del cliente:</p>
+<ul>
+<li><strong>Gestión de Perfil:</strong> Los usuarios pueden ver y actualizar su información personal.</li>
+<li><strong>Gestión de Mascotas:</strong> Permite registrar, editar y eliminar las mascotas asociadas a su cuenta.</li>
+<li><strong>Reserva de Citas:</strong> Los clientes pueden agendar nuevas citas, ver su historial y cancelar citas existentes.</li>
+<li><strong>Notificaciones:</strong> Recibe recordatorios y confirmaciones de sus citas.</li>
+</ul>
+</section>
+<section id="rol-de-expo-go" class="level2">
+<h2 class="anchored" data-anchor-id="rol-de-expo-go">2. Rol de Expo Go</h2>
+<p><strong>Expo Go</strong> es una herramienta fundamental en nuestro ciclo de desarrollo, ya que permite:</p>
+<ul>
+<li><strong>Desarrollo Rápido:</strong> Probar la aplicación en dispositivos físicos (iOS y Android) sin necesidad de compilar el código nativo.</li>
+<li><strong>Acceso a APIs Nativas:</strong> Facilita el uso de funcionalidades del dispositivo como la cámara, notificaciones push y almacenamiento local.</li>
+<li><strong>Publicación Simplificada:</strong> Simplifica el proceso de despliegue en las tiendas de aplicaciones.</li>
+</ul>
+</section>
+<section id="vistas-de-la-app-móvil" class="level2">
+<h2 class="anchored" data-anchor-id="vistas-de-la-app-móvil">3. Vistas de la App Móvil</h2>
+<p>A continuación se muestran algunas capturas de la interfaz de cliente en la aplicación móvil.</p>
+</section>
+<section id="acceso-y-principal" class="level2">
+<h2 class="anchored" data-anchor-id="acceso-y-principal">Acceso y Principal</h2>
+<div class="quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/inicio_sesion.png" class="img-fluid figure-img" width="300"></p>
+<figcaption>Inicio de Sesión</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/registro_usuario.png" class="img-fluid figure-img" width="300"></p>
+<figcaption>Crear Cuenta</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="interfaz-del-cliente" class="level2">
+<h2 class="anchored" data-anchor-id="interfaz-del-cliente">Interfaz del Cliente</h2>
+<div class="quarto-layout-panel" data-layout-ncol="3">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/dashboard_movil.png" class="img-fluid figure-img" width="300"></p>
+<figcaption>Interfaz Cliente</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/lista_mascotas.png" class="img-fluid figure-img" width="300"></p>
+<figcaption>Mis mascotas</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src=".quarto/img/reservacion_cita.png" class="img-fluid figure-img" width="300"></p>
+<figcaption>Reserva de Cita</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="configuración-y-ejecución" class="level2">
+<h2 class="anchored" data-anchor-id="configuración-y-ejecución">4. Configuración y Ejecución</h2>
+<p>Para la puesta en marcha de la aplicación móvil:</p>
+<ol type="1">
+<li><strong>Instalar dependencias:</strong> <code>npm install</code></li>
+<li><strong>Configurar API Key:</strong> Establece la <code>GEMINI_API_KEY</code> en el archivo <code>.env.local</code> con tu clave de API de Gemini.</li>
+<li><strong>Ejecutar la app:</strong> <code>npm run dev</code></li>
+</ol>
+</section>
+<section id="notas-sobre-la-carpeta-.expo" class="level2">
+<h2 class="anchored" data-anchor-id="notas-sobre-la-carpeta-.expo">5. Notas sobre la carpeta .expo</h2>
+<p><strong>¿Por qué tengo una carpeta llamada “.expo” en mi proyecto?</strong></p>
+<p>La carpeta <code>.expo</code> se crea automáticamente cuando se inicia un proyecto Expo mediante el comando <code>expo start</code>.</p>
+<p><strong>¿Qué contienen los archivos?</strong></p>
+<ul>
+<li><code>devices.json</code>: Contiene información sobre los dispositivos que han abierto recientemente este proyecto. Se utiliza para poblar la lista de “Sesiones de desarrollo”.</li>
+<li><code>packager-info.json</code>: Contiene números de puerto y PIDs de procesos utilizados para servir la aplicación al dispositivo móvil o simulador.</li>
+<li><code>settings.json</code>: Contiene la configuración del servidor utilizada para servir el manifiesto de la aplicación.</li>
+</ul>
+<p><strong>¿Debo incluir la carpeta “.expo” en el control de versiones (git)?</strong></p>
+<p><strong>No</strong>, no debes compartir la carpeta <code>.expo</code>. No contiene información relevante para otros desarrolladores del proyecto y es específica de tu máquina local. Por defecto, esta carpeta se añade automáticamente al archivo <code>.gitignore</code> al crear el proyecto.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

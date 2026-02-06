@@ -1,0 +1,268 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "",
+    "text": "Bienvenido a la documentación de PelusasSpa. Este sitio contiene la documentación completa del sistema, organizada por fases del ciclo de vida del software (SDLC), requisitos, arquitectura basada en microservicios, pruebas y despliegue."
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "About this site"
+  },
+  {
+    "objectID": "index.html#visión",
+    "href": "index.html#visión",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "1. Visión",
+    "text": "1. Visión\nPelusasSpa es un sistema web orientado a la gestión integral de una peluquería canina, desarrollado bajo una arquitectura de microservicios desplegados en contenedores. Su objetivo principal es optimizar la administración de citas, mascotas y usuarios, mejorando la eficiencia operativa y la experiencia del cliente."
+  },
+  {
+    "objectID": "index.html#necesidad",
+    "href": "index.html#necesidad",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "2. Necesidad",
+    "text": "2. Necesidad\nActualmente, la gestión manual de citas, registros de clientes y control de mascotas genera retrasos, errores humanos y desorganización en el proceso operativo. Surge la necesidad de automatizar estas actividades mediante un sistema distribuido que permita escalar, mantener y evolucionar cada funcionalidad de manera independiente."
+  },
+  {
+    "objectID": "index.html#alcance",
+    "href": "index.html#alcance",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "3. Alcance",
+    "text": "3. Alcance\nEl sistema permitirá el registro y autenticación de usuarios, la gestión de mascotas, el agendamiento de citas y la administración del sistema mediante roles definidos (administrador, peluquero y cliente). Esta versión del sistema no contempla pasarela de pagos, facturación ni integraciones externas."
+  },
+  {
+    "objectID": "index.html#requisitos-funcionales",
+    "href": "index.html#requisitos-funcionales",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "1. Requisitos Funcionales",
+    "text": "1. Requisitos Funcionales\n\nRF-01 Gestión de Usuarios\nEl sistema deberá permitir la gestión de usuarios mediante autenticación y autorización, considerando los roles de administrador, peluquero y cliente.\n\n\nRF-02 Registro y Autenticación\nEl sistema deberá permitir el registro de clientes, así como el inicio y cierre de sesión, garantizando la validación de credenciales.\n\n\nRF-03 Gestión de Clientes\nEl sistema deberá permitir la consulta y actualización de la información personal de los clientes.\n\n\nRF-04 Gestión de Mascotas\nEl sistema deberá permitir a los clientes registrar, consultar, modificar y eliminar información de sus mascotas, incluyendo nombre, raza, edad y observaciones relevantes.\n\n\nRF-05 Gestión de Servicios\nEl sistema deberá permitir la gestión de los servicios ofrecidos por la peluquería canina, incluyendo descripción y duración estimada.\n\n\nRF-06 Gestión de Citas\nEl sistema deberá permitir a los clientes agendar, modificar y cancelar citas, asociando una mascota, un servicio y una fecha disponible.\n\n\nRF-07 Gestión de Citas por el Peluquero\nEl sistema deberá permitir al peluquero visualizar la lista de citas asignadas y actualizar su estado (pendiente, en proceso o finalizada).\n\n\nRF-08 Gestión Administrativa\nEl sistema deberá permitir al administrador supervisar usuarios, servicios y citas desde el panel administrativo proporcionado por Django.\n\n\nRF-09 Comunicación entre Microservicios\nEl sistema deberá permitir la comunicación entre microservicios mediante interfaces REST, garantizando independencia y desacoplamiento funcional.\n\n\nRF-10 Registro de Actividades\nEl sistema deberá registrar eventos relevantes como creación y modificación de citas, inicio de sesión y cambios de estado."
+  },
+  {
+    "objectID": "index.html#requisitos-no-funcionales",
+    "href": "index.html#requisitos-no-funcionales",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "2. Requisitos No Funcionales",
+    "text": "2. Requisitos No Funcionales\n\nRNF-01 Arquitectura: El sistema deberá estar basado en una arquitectura de microservicios desplegados en contenedores.\nRNF-02 Seguridad: El sistema deberá implementar autenticación, autorización por roles y protección de datos.\nRNF-03 Escalabilidad: El sistema deberá permitir el escalado independiente de cada microservicio según la demanda.\nRNF-04 Rendimiento: El sistema deberá responder a las solicitudes en un tiempo máximo de 3 segundos.\nRNF-05 Usabilidad: El sistema deberá contar con una interfaz intuitiva, navegación clara y diseño responsivo.\nRNF-06 Mantenibilidad: El sistema deberá permitir mantenimiento y evolución sin afectar otros microservicios.\nRNF-07 Compatibilidad: El sistema deberá ser compatible con navegadores web modernos."
+  },
+  {
+    "objectID": "index.html#arquitectura-general",
+    "href": "index.html#arquitectura-general",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "1. Arquitectura General",
+    "text": "1. Arquitectura General\nPelusasSpa utiliza una arquitectura de microservicios, donde cada servicio cumple una responsabilidad específica y se comunica mediante APIs REST. Los servicios se despliegan en contenedores, lo que permite escalabilidad, mantenibilidad y despliegue independiente.\nStack Tecnológico: * Backend: Python con Django Framework. * Frontend Web: React ejecutándose sobre un entorno Node.js. * Aplicación Móvil: React Native desplegado y gestionado mediante Expo Go. * Infraestructura: Arquitectura de microservicios orquestada con Docker."
+  },
+  {
+    "objectID": "index.html#modelo-c4-contexto",
+    "href": "index.html#modelo-c4-contexto",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "2. Modelo C4 – Contexto",
+    "text": "2. Modelo C4 – Contexto\nEl diagrama de contexto muestra la interacción entre los diferentes tipos de usuarios (administrador, peluquero y cliente) y el sistema PelusasSpa como un conjunto de servicios.\n\n\n\nDiagrama C4 de Contexto"
+  },
+  {
+    "objectID": "index.html#nivel-2-diagrama-de-contenedores",
+    "href": "index.html#nivel-2-diagrama-de-contenedores",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "Nivel 2: Diagrama de Contenedores",
+    "text": "Nivel 2: Diagrama de Contenedores\nEste diagrama desglosa el sistema en sus contenedores principales, mostrando las tecnologías específicas y cómo se comunican.\n\n\n\n\n\n\ngraph TB\n    User[Cliente]\n    Admin[Administrador]\n\n    subgraph \"Sistema Pelusas Spa (Dockerizado)\"\n        MobileApp[App Móvil&lt;br/&gt;React Native / Expo Go]\n        WebApp[Web App&lt;br/&gt;React / Node.js]\n        API[API Backend&lt;br/&gt;Python / Django]\n        DB[(Base de Datos&lt;br/&gt;PostgreSQL)]\n    end\n\n    User --&gt;|Usa| MobileApp\n    User --&gt;|Usa| WebApp\n    Admin --&gt;|Usa| WebApp\n\n    MobileApp --&gt;|HTTPS/JSON| API\n    WebApp --&gt;|HTTPS/JSON| API\n    API --&gt;|SQL| DB\n\n    style MobileApp fill:#438dd5,stroke:#333,color:#fff\n    style WebApp fill:#438dd5,stroke:#333,color:#fff\n    style API fill:#438dd5,stroke:#333,color:#fff\n    style DB fill:#2f95d7,stroke:#333,color:#fff\n\n\n\n\nFigura 2: Diagrama de Contenedores"
+  },
+  {
+    "objectID": "index.html#backend-django",
+    "href": "index.html#backend-django",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "Backend (Django)",
+    "text": "Backend (Django)\nEl núcleo de la aplicación. Expone una API RESTful que maneja la lógica de negocio, autenticación de usuarios y gestión de datos."
+  },
+  {
+    "objectID": "index.html#frontend-react-node",
+    "href": "index.html#frontend-react-node",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "Frontend (React & Node)",
+    "text": "Frontend (React & Node)\nProporciona la interfaz web tanto para el portal de clientes como para el panel administrativo del spa. Node.js se utiliza para servir la aplicación y gestionar dependencias."
+  },
+  {
+    "objectID": "index.html#móvil-expo-go",
+    "href": "index.html#móvil-expo-go",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "Móvil (Expo Go)",
+    "text": "Móvil (Expo Go)\nPermite a los clientes acceder a los servicios desde sus dispositivos móviles. Expo Go facilita el desarrollo y las pruebas rápidas en dispositivos físicos."
+  },
+  {
+    "objectID": "index.html#funcionalidades-principales",
+    "href": "index.html#funcionalidades-principales",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "1. Funcionalidades Principales",
+    "text": "1. Funcionalidades Principales\nLa app móvil está diseñada para ofrecer una experiencia de usuario fluida y enfocada en las necesidades del cliente:\n\nGestión de Perfil: Los usuarios pueden ver y actualizar su información personal.\nGestión de Mascotas: Permite registrar, editar y eliminar las mascotas asociadas a su cuenta.\nReserva de Citas: Los clientes pueden agendar nuevas citas, ver su historial y cancelar citas existentes.\nNotificaciones: Recibe recordatorios y confirmaciones de sus citas."
+  },
+  {
+    "objectID": "index.html#rol-de-expo-go",
+    "href": "index.html#rol-de-expo-go",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "2. Rol de Expo Go",
+    "text": "2. Rol de Expo Go\nExpo Go es una herramienta fundamental en nuestro ciclo de desarrollo, ya que permite:\n\nDesarrollo Rápido: Probar la aplicación en dispositivos físicos (iOS y Android) sin necesidad de compilar el código nativo.\nAcceso a APIs Nativas: Facilita el uso de funcionalidades del dispositivo como la cámara, notificaciones push y almacenamiento local.\nPublicación Simplificada: Simplifica el proceso de despliegue en las tiendas de aplicaciones."
+  },
+  {
+    "objectID": "index.html#vistas-de-la-app-móvil",
+    "href": "index.html#vistas-de-la-app-móvil",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "3. Vistas de la App Móvil",
+    "text": "3. Vistas de la App Móvil\nA continuación se muestran algunas capturas de la interfaz de cliente en la aplicación móvil."
+  },
+  {
+    "objectID": "index.html#requisitos-funcionales-rf",
+    "href": "index.html#requisitos-funcionales-rf",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "1. Requisitos Funcionales (RF)",
+    "text": "1. Requisitos Funcionales (RF)\n\nRF01 – Registro de Clientes\nRF02 – Gestión de Mascotas\nRF03 – Agendamiento de Citas\nRF04 – Validación de Disponibilidad\nRF05 – Cancelación de Citas por el Cliente\nRF06 – Visualización del Estado de Citas\nRF07 – Registro de Peluqueros (solo administrador)\nRF08 – Gestión de Horarios de Peluqueros\nRF09 – Visualización Administrativa de Citas\nRF10 – Gestión de Estado de Citas por Peluqueros\nRF11 – Notificaciones de Cambio de Estado"
+  },
+  {
+    "objectID": "index.html#requisitos-no-funcionales-rnf",
+    "href": "index.html#requisitos-no-funcionales-rnf",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "2. Requisitos No Funcionales (RNF)",
+    "text": "2. Requisitos No Funcionales (RNF)\n\nRNF01 – Seguridad: JWT, roles, permisos.\nRNF02 – Rendimiento: Tiempo de respuesta &lt;2s.\nRNF03 – Disponibilidad: 99%.\nRNF04 – Escalabilidad: Microservicios.\nRNF05 – Usabilidad: Interfaz intuitiva.\nRNF06 – Mantenibilidad: PEP8, REST, documentación.\nRNF07 – Integridad de Datos: Restricciones y validaciones."
+  },
+  {
+    "objectID": "index.html#reglas-de-negocio-rn",
+    "href": "index.html#reglas-de-negocio-rn",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "3. Reglas de Negocio (RN)",
+    "text": "3. Reglas de Negocio (RN)\n\nRN01: Una mascota no puede tener dos citas el mismo día.\nRN02: Un cliente solo puede cancelar sus propias citas.\nRN03: Solo el administrador puede registrar peluqueros.\nRN04: Los horarios solo pueden ser gestionados por el administrador.\nRN05: Toda cita debe estar asociada a un peluquero disponible.\nRN06: Estados permitidos: Pendiente, Confirmada, Cancelada, Finalizada."
+  },
+  {
+    "objectID": "index.html#tecnologías-frameworks-y-lenguajes-utilizados",
+    "href": "index.html#tecnologías-frameworks-y-lenguajes-utilizados",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "1. Tecnologías, Frameworks y Lenguajes Utilizados",
+    "text": "1. Tecnologías, Frameworks y Lenguajes Utilizados\n\nLenguaje de Programación\n\nPython 3.11+: Lenguaje principal para el desarrollo backend basado en Django y Django REST Framework debido a su rapidez de desarrollo, mantenibilidad y ecosistema maduro.\n\n\n\nFrameworks Backend\n\nDjango 5: Framework principal para la construcción de cada microservicio por su robustez, modularidad y ORM integrado.\nDjango REST Framework (DRF): Framework utilizado para crear APIs RESTful, proporcionando Serializers, Viewsets, Routers, Autenticación JWT y Control de permisos por roles.\n\n\n\nArquitectura de Microservicios\nEl sistema se divide en dos servicios independientes:\n\nUserService:\n\nGestión de usuarios, autenticación, roles (cliente, peluquero, administrador).\nGeneración de tokens JWT.\nManejo de cuentas y permisos.\n\nCita-Cliente Service (Cliente + Mascota + Cita + Peluquero):\n\nGestión de clientes.\nGestión de mascotas.\nAgendamiento y validación de citas.\nGestión de horarios de peluqueros.\nCambio de estado de citas.\n\n\n\n\nContenedores y Orquestación\n\nDocker: Utilizado para empaquetar cada microservicio en contenedores independientes, asegurando que funcionen igual en desarrollo, pruebas y producción.\nDocker Compose: Permite levantar base de datos, microservicios, API Gateway, redes internas y volúmenes con un solo comando.\n\n\n\nAPI Gateway\nKong API Gateway se implementa como el punto de entrada unificado para gestionar el tráfico hacia los microservicios. Sus funciones principales incluyen:\n\nRuteo: Distribución inteligente de solicitudes entre servicios.\nSeguridad: Centralización de políticas de acceso y protección.\nControl de Tráfico: Gestión de carga y limitación de tasas (rate limiting).\nVersionado: Soporte para múltiples versiones de la API simultáneamente.\n\nEsta capa adicional aporta escalabilidad y desacoplamiento al sistema.\n\n\nAutenticación y Autorización\n\nJWT (JSON Web Tokens): Mecanismo para iniciar sesión, mantener sesiones seguras y transmitir roles de usuario en el token. Utilizado principalmente con djangorestframework-simplejwt."
+  },
+  {
+    "objectID": "index.html#configuración-y-ejecución",
+    "href": "index.html#configuración-y-ejecución",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "4. Configuración y Ejecución",
+    "text": "4. Configuración y Ejecución\nPara la puesta en marcha de la aplicación móvil:\n\nInstalar dependencias: npm install\nConfigurar API Key: Establece la GEMINI_API_KEY en el archivo .env.local con tu clave de API de Gemini.\nEjecutar la app: npm run dev"
+  },
+  {
+    "objectID": "index.html#modelo-c4-componentes",
+    "href": "index.html#modelo-c4-componentes",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "4. Modelo C4 – Componentes",
+    "text": "4. Modelo C4 – Componentes\nEl diagrama de componentes detalla la estructura interna de cada microservicio, mostrando componentes como gestión de usuarios, mascotas y citas.\n\n\n\nDiagrama C4 de Componentes"
+  },
+  {
+    "objectID": "index.html#pruebas-funcionales",
+    "href": "index.html#pruebas-funcionales",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "2. Pruebas Funcionales",
+    "text": "2. Pruebas Funcionales\nLas pruebas funcionales evalúan el comportamiento del sistema completo, verificando la correcta interacción entre los microservicios.\n\n\n\n\n\n\nFlujo de Pruebas Funcionales\n\n\n\n\n\n\n\nRespuesta Login\n\n\n\n\n\n\n\n\n\nRespuesta Creación"
+  },
+  {
+    "objectID": "index.html#entorno-de-despliegue",
+    "href": "index.html#entorno-de-despliegue",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "1. Entorno de Despliegue",
+    "text": "1. Entorno de Despliegue\nEl sistema PelusasSpa se despliega utilizando contenedores Docker, lo que permite ejecutar cada componente del sistema de manera aislada.\n\n\n\nUso de Docker"
+  },
+  {
+    "objectID": "index.html#microservicios-del-sistema",
+    "href": "index.html#microservicios-del-sistema",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "2. Microservicios del Sistema",
+    "text": "2. Microservicios del Sistema\nEl sistema está compuesto por dos microservicios principales:\n\nMicroservicio de Gestión de Usuarios: Encargado del registro, autenticación y administración de usuarios. \nMicroservicio de Gestión de Citas: Responsable de la creación, consulta y administración de las citas."
+  },
+  {
+    "objectID": "index.html#configuración-del-despliegue",
+    "href": "index.html#configuración-del-despliegue",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "3. Configuración del Despliegue",
+    "text": "3. Configuración del Despliegue\nEl despliegue del sistema utiliza variables de entorno para definir parámetros como puertos y credenciales.\n\n\n\n\n\n\nServidor Citas\n\n\n\n\n\n\n\nServidor Usuarios"
+  },
+  {
+    "objectID": "index.html#acceso-y-principal",
+    "href": "index.html#acceso-y-principal",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "Acceso y Principal",
+    "text": "Acceso y Principal\n\n\n\n\n\n\nInicio de Sesión\n\n\n\n\n\n\n\nCrear Cuenta"
+  },
+  {
+    "objectID": "index.html#interfaz-del-cliente",
+    "href": "index.html#interfaz-del-cliente",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "Interfaz del Cliente",
+    "text": "Interfaz del Cliente\n\n\n\n\n\n\nInterfaz Cliente\n\n\n\n\n\n\n\nMis mascotas\n\n\n\n\n\n\n\nReserva de Cita"
+  },
+  {
+    "objectID": "index.html#interfaz-del-administrador",
+    "href": "index.html#interfaz-del-administrador",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "Interfaz del Administrador",
+    "text": "Interfaz del Administrador"
+  },
+  {
+    "objectID": "index.html#interfaz-del-peluquero",
+    "href": "index.html#interfaz-del-peluquero",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "Interfaz del Peluquero",
+    "text": "Interfaz del Peluquero"
+  },
+  {
+    "objectID": "index.html#modelo-c4-contenedores",
+    "href": "index.html#modelo-c4-contenedores",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "3. Modelo C4 – Contenedores",
+    "text": "3. Modelo C4 – Contenedores\nEl diagrama de contenedores representa los principales contenedores que conforman el sistema, incluyendo el frontend web, los microservicios backend y la base de datos.\n\n\n\nDiagrama C4 de Contenedores"
+  },
+  {
+    "objectID": "index.html#modelo-c4-despliegue",
+    "href": "index.html#modelo-c4-despliegue",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "5. Modelo C4 – Despliegue",
+    "text": "5. Modelo C4 – Despliegue\nEl diagrama de despliegue describe cómo los microservicios se ejecutan dentro de contenedores y cómo se comunican dentro del entorno de ejecución.\n\n\n\nDiagrama C4 de Despliegue"
+  },
+  {
+    "objectID": "index.html#pruebas-unitarias",
+    "href": "index.html#pruebas-unitarias",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "1. Pruebas Unitarias",
+    "text": "1. Pruebas Unitarias\nLas pruebas unitarias se realizan de manera individual sobre cada microservicio, validando el correcto funcionamiento de sus métodos y lógica de negocio.\n\n\n\n\n\n\nPruebas Unitarias - Usuario Service\n\n\n\n\n\n\n\nPruebas Unitarias - Citas Service"
+  },
+  {
+    "objectID": "index.html#configuración-y-ejecución-1",
+    "href": "index.html#configuración-y-ejecución-1",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "4. Configuración y Ejecución",
+    "text": "4. Configuración y Ejecución\nPara la puesta en marcha de la aplicación móvil:\n\nInstalar dependencias: npm install\nConfigurar API Key: Establece la GEMINI_API_KEY en el archivo .env.local con tu clave de API de Gemini.\nEjecutar la app: npm run dev"
+  },
+  {
+    "objectID": "index.html#notas-sobre-la-carpeta-.expo",
+    "href": "index.html#notas-sobre-la-carpeta-.expo",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "5. Notas sobre la carpeta .expo",
+    "text": "5. Notas sobre la carpeta .expo\n¿Por qué tengo una carpeta llamada “.expo” en mi proyecto?\nLa carpeta .expo se crea automáticamente cuando se inicia un proyecto Expo mediante el comando expo start.\n¿Qué contienen los archivos?\n\ndevices.json: Contiene información sobre los dispositivos que han abierto recientemente este proyecto. Se utiliza para poblar la lista de “Sesiones de desarrollo”.\npackager-info.json: Contiene números de puerto y PIDs de procesos utilizados para servir la aplicación al dispositivo móvil o simulador.\nsettings.json: Contiene la configuración del servidor utilizada para servir el manifiesto de la aplicación.\n\n¿Debo incluir la carpeta “.expo” en el control de versiones (git)?\nNo, no debes compartir la carpeta .expo. No contiene información relevante para otros desarrolladores del proyecto y es específica de tu máquina local. Por defecto, esta carpeta se añade automáticamente al archivo .gitignore al crear el proyecto."
+  },
+  {
+    "objectID": "index.html#infraestructura-backend-docker",
+    "href": "index.html#infraestructura-backend-docker",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "1. Infraestructura Backend (Docker)",
+    "text": "1. Infraestructura Backend (Docker)\nEl backend debe iniciarse primero para que la API esté disponible.\n\nIniciar Docker Desktop: Asegúrese de que el motor de Docker esté corriendo.\nGenerar y Levantar Contenedores: En la raíz del proyecto backend, ejecute: bash     docker-compose up --build\n\nEste comando compila las imágenes de los microservicios y levanta la orquestación definida.\nEl API Gateway quedará expuesto (generalmente en el puerto 8000) para recibir peticiones externas."
+  },
+  {
+    "objectID": "index.html#conectividad-móvil-expo-go",
+    "href": "index.html#conectividad-móvil-expo-go",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "2. Conectividad Móvil (Expo Go)",
+    "text": "2. Conectividad Móvil (Expo Go)\nLa comunicación entre el dispositivo móvil (Expo Go) y el backend (Docker en localhost) requiere configuración de red, ya que se ejecutan en entornos separados.\n\nArquitectura de Comunicación\n\nBackend: Corre dentro de contenedores Docker, expuestos al localhost de su computadora.\nExpo Go: Corre en un dispositivo físico o emulador.\n\n\n\nConfiguración de Acceso\nPara que Expo Go “vea” al backend:\n\nEn Dispositivo Físico (Misma Wi-Fi):\n\nObtenga la IP Local de su PC (ej. ipconfig \\(\\to\\) 192.168.1.15).\nConfigure la URL de la API en la app móvil apuntando a esa IP: http://192.168.1.15:8000.\n\nEn Emulador Android:\n\nUtilice la dirección reservada http://10.0.2.2:8000 que redirige al localhost de la PC."
+  },
+  {
+    "objectID": "index.html#ejecución-del-cliente-móvil",
+    "href": "index.html#ejecución-del-cliente-móvil",
+    "title": "Pelusas Spa - Documentación del Sistema",
+    "section": "3. Ejecución del Cliente Móvil",
+    "text": "3. Ejecución del Cliente Móvil\nUna vez el backend está operativo:\n\nEn una nueva terminal, navegue al directorio de la app móvil.\nEjecute npx expo start para iniciar el servidor de desarrollo (Metro Bundler).\nEscanee el código QR con su celular o presione a (Android) / i (iOS) para abrir el emulador."
+  }
+]
