@@ -47,6 +47,42 @@
       .material-symbols-outlined.fill {
         font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
       }
+      
+      /* Estilos de Alto Contraste */
+      html.high-contrast {
+        filter: contrast(150%) brightness(110%);
+      }
+      
+      html.high-contrast * {
+        border-color: #000 !important;
+        text-shadow: none !important;
+        box-shadow: none !important;
+      }
+      
+      html.high-contrast .bg-primary,
+      html.high-contrast .bg-green-600,
+      html.high-contrast .bg-blue-600 {
+        background-color: #000 !important;
+        color: #fff !important;
+      }
+      
+      html.high-contrast .text-primary,
+      html.high-contrast .text-green-600,
+      html.high-contrast .text-blue-600 {
+        color: #000 !important;
+        font-weight: 600 !important;
+      }
+      
+      html.high-contrast a {
+        color: #00f !important;
+        text-decoration: underline !important;
+        font-weight: 600 !important;
+      }
+      
+      html.high-contrast button {
+        border: 2px solid #000 !important;
+        font-weight: 600 !important;
+      }
     </style>
 <script type="importmap">
 {

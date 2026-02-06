@@ -234,7 +234,7 @@ const PeluqueroPanel: React.FC = () => {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Cargando citas...</p>
         </div>
       </div>
@@ -289,7 +289,7 @@ const PeluqueroPanel: React.FC = () => {
                 onClick={() => setFiltroEstado('PENDIENTE')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'PENDIENTE'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -299,7 +299,7 @@ const PeluqueroPanel: React.FC = () => {
                 onClick={() => setFiltroEstado('CONFIRMADA')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'CONFIRMADA'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -309,7 +309,7 @@ const PeluqueroPanel: React.FC = () => {
                 onClick={() => setFiltroEstado('NO_ASISTIO')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'NO_ASISTIO'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -319,7 +319,7 @@ const PeluqueroPanel: React.FC = () => {
                 onClick={() => setFiltroEstado('CANCELADA')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'CANCELADA'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -329,7 +329,7 @@ const PeluqueroPanel: React.FC = () => {
                 onClick={() => setFiltroEstado('TODAS')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === 'TODAS'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -348,7 +348,7 @@ const PeluqueroPanel: React.FC = () => {
                 onClick={() => setFiltroFecha('HOY')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroFecha === 'HOY'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -358,7 +358,7 @@ const PeluqueroPanel: React.FC = () => {
                 onClick={() => setFiltroFecha('PROXIMOS')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroFecha === 'PROXIMOS'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -368,7 +368,7 @@ const PeluqueroPanel: React.FC = () => {
                 onClick={() => setFiltroFecha('TODAS')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroFecha === 'TODAS'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -400,7 +400,7 @@ const PeluqueroPanel: React.FC = () => {
                   required
                   value={editForm.nombre}
                   onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-purple-600 focus:ring-purple-200 dark:focus:border-purple-500 dark:focus:ring-purple-900/30 outline-none"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-green-600 focus:ring-green-200 dark:focus:border-green-500 dark:focus:ring-green-900/30 outline-none"
                 />
               </div>
               <div>
@@ -410,7 +410,7 @@ const PeluqueroPanel: React.FC = () => {
                   required
                   value={editForm.apellido}
                   onChange={(e) => setEditForm({ ...editForm, apellido: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-purple-600 focus:ring-purple-200 dark:focus:border-purple-500 dark:focus:ring-purple-900/30 outline-none"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-green-600 focus:ring-green-200 dark:focus:border-green-500 dark:focus:ring-green-900/30 outline-none"
                 />
               </div>
               <div>
@@ -419,7 +419,7 @@ const PeluqueroPanel: React.FC = () => {
                   type="tel"
                   value={editForm.telefono}
                   onChange={(e) => setEditForm({ ...editForm, telefono: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-purple-600 focus:ring-purple-200 dark:focus:border-purple-500 dark:focus:ring-purple-900/30 outline-none"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-green-600 focus:ring-green-200 dark:focus:border-green-500 dark:focus:ring-green-900/30 outline-none"
                 />
               </div>
               <div>
@@ -428,7 +428,7 @@ const PeluqueroPanel: React.FC = () => {
                   rows={3}
                   value={editForm.direccion}
                   onChange={(e) => setEditForm({ ...editForm, direccion: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-purple-600 focus:ring-purple-200 dark:focus:border-purple-500 dark:focus:ring-purple-900/30 outline-none resize-none"
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-3 focus:border-green-600 focus:ring-green-200 dark:focus:border-green-500 dark:focus:ring-green-900/30 outline-none resize-none"
                 />
               </div>
               <div className="flex gap-3 mt-2">
@@ -442,7 +442,7 @@ const PeluqueroPanel: React.FC = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 h-11 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 h-11 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? 'Guardando...' : 'Guardar'}
                 </button>
@@ -549,11 +549,11 @@ const PeluqueroPanel: React.FC = () => {
       </div>
 
       {/* Resumen */}
-      <div className="mt-8 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800/30">
-        <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-300 mb-3">Resumen</h3>
+      <div className="mt-8 bg-green-50 dark:bg-green-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800/30">
+        <h3 className="text-lg font-semibold text-green-900 dark:text-green-300 mb-3">Resumen</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-300">
+            <p className="text-2xl font-bold text-green-600 dark:text-green-300">
               {citasFiltradas.filter(c => c.estado === 'PENDIENTE').length}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Pendientes</p>

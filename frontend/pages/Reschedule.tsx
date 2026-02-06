@@ -2,17 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { citasService, Cita } from '../services/citasService';
 import { mascotasService } from '../services/mascotasService';
+import Toast from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 import type { Horario, Servicio } from '../services/citasService';
 
 const Reschedule: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { messages, removeToast, success, error: showError } = useToast();
   
   const [cita, setCita] = useState<Cita | null>(null);
   const [mascotaNombre, setMascotaNombre] = useState<string>('');
   const [servicio, setServicio] = useState<Servicio | null>(null);
   const [horarios, setHorarios] = useState<Horario[]>([]);
-  const [availableHorarios, setAvailableHorarios] = useState<{ time: string; occupied: boolean }[]>([]);
+  const [availableHorarios, setAvailableHorarios] = useState<{ time: string; occupied: boolean; isCurrent: boolean }[]>([]);
   const [loadingHorarios, setLoadingHorarios] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -85,11 +88,16 @@ const Reschedule: React.FC = () => {
 
     try {
       // Obtener día de la semana
-      const selectedDateObj = new Date(selectedDate);
+      // Crear fecha en zona horaria local para evitar desfase UTC
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const selectedDateObj = new Date(year, month - 1, day);
       const todayMidnight = new Date();
       todayMidnight.setHours(0, 0, 0, 0);
       const dayOfWeek = selectedDateObj.getDay();
       const dayOfWeekAdjusted = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      
+      console.log(`📅 Fecha seleccionada: ${selectedDate}, JS Day: ${dayOfWeek}, Backend Day: ${dayOfWeekAdjusted}`);
+      console.log(`📅 Mapeo: ${['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dayOfWeek]} (JS: ${dayOfWeek}) → ${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'][dayOfWeekAdjusted]} (Backend: ${dayOfWeekAdjusted})`);
 
       // Bloquear días pasados completos
       if (selectedDateObj < todayMidnight) {
@@ -103,12 +111,17 @@ const Reschedule: React.FC = () => {
         h.dia_semana === dayOfWeekAdjusted && 
         h.activo
       );
+      
+      console.log(`🔍 Buscando horarios para peluquero ${cita.peluquero_id} en día ${dayOfWeekAdjusted}`);
 
       if (peluqueroHorarios.length === 0) {
-        console.log(`🔍 Sin horarios para peluquero ${cita.peluquero_id} en día ${dayOfWeekAdjusted}`);
+        console.log(`❌ Sin horarios para peluquero ${cita.peluquero_id} en día ${dayOfWeekAdjusted} (${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'][dayOfWeekAdjusted]})`);
+        console.log(`📋 Horarios disponibles del peluquero ${cita.peluquero_id}:`, horarios.filter(h => h.peluquero_id === cita.peluquero_id && h.activo));
         setAvailableHorarios([]);
         return;
       }
+      
+      console.log(`✅ Encontrados ${peluqueroHorarios.length} horarios:`, peluqueroHorarios);
 
       // Obtener citas existentes (excluyendo la actual que estamos reprogramando)
       let citasExistentes = [];
@@ -150,11 +163,15 @@ const Reschedule: React.FC = () => {
       };
 
       // Generar slots de hora con información de ocupación
-      const slots: { time: string; occupied: boolean }[] = [];
+      const slots: { time: string; occupied: boolean; isCurrent: boolean }[] = [];
       const serviceDuration = servicio.duracion_minutos;
       const today = new Date();
       const isToday = selectedDateObj.toDateString() === today.toDateString();
       const currentMinutes = today.getHours() * 60 + today.getMinutes();
+      
+      // Verificar si la fecha seleccionada es la misma que la fecha actual de la cita
+      const isCurrentDate = selectedDate === cita.fecha;
+      const currentTimeStr = cita.hora_inicio.substring(0, 5); // Formato HH:MM
 
       for (const horario of peluqueroHorarios) {
         const [startHour, startMin] = horario.hora_inicio.split(':').map(Number);
@@ -171,7 +188,8 @@ const Reschedule: React.FC = () => {
 
           const occupiedByPastTime = isToday && time <= currentMinutes;
           const occupied = occupiedByPastTime || isSlotOccupied(timeStr, serviceDuration);
-          slots.push({ time: timeStr, occupied });
+          const isCurrent = isCurrentDate && timeStr === currentTimeStr;
+          slots.push({ time: timeStr, occupied, isCurrent });
         }
       }
 
@@ -224,7 +242,10 @@ const Reschedule: React.FC = () => {
         hora_fin: horaFin
       });
 
-      navigate('/dashboard');
+      success('Cita reprogramada correctamente');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 500);
     } catch (err: any) {
       setError(err.message || 'Error al reagendar la cita');
       setSubmitting(false);
@@ -438,14 +459,17 @@ const Reschedule: React.FC = () => {
                                 className={`px-3 py-2 rounded-lg border text-sm transition-all ${
                                   slot.occupied
                                     ? 'opacity-50 cursor-not-allowed bg-red-500/10 border-red-500/30 text-red-500/50'
-                                    : selectedTime === slot.time 
-                                      ? 'bg-primary text-text-light border-primary font-bold' 
-                                      : 'border-primary/20 dark:border-primary/30 text-text-light dark:text-text-dark hover:bg-primary/20'
+                                    : slot.isCurrent
+                                      ? 'bg-green-500 text-white border-green-500 font-bold ring-2 ring-green-300'
+                                      : selectedTime === slot.time 
+                                        ? 'bg-primary text-text-light border-primary font-bold' 
+                                        : 'border-primary/20 dark:border-primary/30 text-text-light dark:text-text-dark hover:bg-primary/20'
                                 }`}
-                                title={slot.occupied ? 'Este horario está ocupado' : slot.time}
+                                title={slot.occupied ? 'Este horario está ocupado' : slot.isCurrent ? 'Horario actual de la cita' : slot.time}
                               >
                                 {slot.time}
                                 {slot.occupied && <span className="text-xs ml-1">✕</span>}
+                                {slot.isCurrent && <span className="text-xs ml-1">●</span>}
                               </button>
                             ))}
                           </div>
@@ -456,6 +480,9 @@ const Reschedule: React.FC = () => {
             </div>
         </div>
       </div>
+      
+      {/* Toast Notifications */}
+      <Toast messages={messages} onRemove={removeToast} />
     </div>
   );
 };
