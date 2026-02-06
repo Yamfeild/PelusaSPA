@@ -1,0 +1,44 @@
+project:
+  type: website
+
+website:
+  title: "🐾 PelusasSpa"
+  sidebar:
+    style: "docked"
+    background: dark
+    contents:
+      - section: "Vistas del Sistema"
+        icon: images
+        contents:
+          - vistas.qmd
+
+      - section: "SDLC"
+        icon: book
+        contents:
+          - sdlc.qmd
+
+      - section: "Requisitos"
+        icon: list-check
+        contents:
+          - requisitos.qmd
+
+      - section: "Diseño y Arquitectura"
+        icon: diagram-3
+        contents:
+          - diseno.qmd
+
+      - section: "Pruebas"
+        icon: bug
+        contents:
+          - pruebas.qmd
+
+      - section: "Despliegue"
+        icon: rocket
+        contents:
+          - despliegue.qmd
+
+format:
+  html:
+    theme: none
+    css: css/style.css
+    toc: true

@@ -1,0 +1,298 @@
+---
+title: "Pelusas Spa - Documentación del Sistema"
+lang: es
+sidebar: false
+format:
+  html:
+    toc: true
+    toc-depth: 1
+    toc-title: "Navegación"
+    toc-location: left
+    page-layout: full
+    theme: cosmo
+    css: styles.css
+    mermaid:
+      theme: neutral
+---
+
+# Introducción
+
+Bienvenido a la documentación de **PelusasSpa**. Este sitio contiene la documentación completa del sistema, organizada por fases del ciclo de vida del software (SDLC), requisitos, arquitectura basada en microservicios, pruebas y despliegue.
+
+# Ciclo de Vida del Desarrollo de Software (SDLC)
+
+Esta sección describe las etapas iniciales del ciclo de vida del desarrollo del sistema **PelusasSpa**, justificando su creación, objetivos y alcance dentro del contexto de una peluquería canina.
+
+## 1. Visión
+PelusasSpa es un sistema web orientado a la gestión integral de una peluquería canina, desarrollado bajo una arquitectura de microservicios desplegados en contenedores. Su objetivo principal es optimizar la administración de citas, mascotas y usuarios, mejorando la eficiencia operativa y la experiencia del cliente.
+
+## 2. Necesidad
+Actualmente, la gestión manual de citas, registros de clientes y control de mascotas genera retrasos, errores humanos y desorganización en el proceso operativo. Surge la necesidad de automatizar estas actividades mediante un sistema distribuido que permita escalar, mantener y evolucionar cada funcionalidad de manera independiente.
+
+## 3. Alcance
+El sistema permitirá el registro y autenticación de usuarios, la gestión de mascotas, el agendamiento de citas y la administración del sistema mediante roles definidos (administrador, peluquero y cliente). Esta versión del sistema no contempla pasarela de pagos, facturación ni integraciones externas.
+
+# Requisitos del Sistema
+
+Esta sección describe los requisitos funcionales, no funcionales y reglas de negocio del sistema **PelusasSpa**.
+
+## 1. Requisitos Funcionales (RF)
+
+*   **RF01 – Registro de Clientes**
+*   **RF02 – Gestión de Mascotas**
+*   **RF03 – Agendamiento de Citas**
+*   **RF04 – Validación de Disponibilidad**
+*   **RF05 – Cancelación de Citas por el Cliente**
+*   **RF06 – Visualización del Estado de Citas**
+*   **RF07 – Registro de Peluqueros** (solo administrador)
+*   **RF08 – Gestión de Horarios de Peluqueros**
+*   **RF09 – Visualización Administrativa de Citas**
+*   **RF10 – Gestión de Estado de Citas por Peluqueros**
+*   **RF11 – Notificaciones de Cambio de Estado**
+
+## 2. Requisitos No Funcionales (RNF)
+
+*   **RNF01 – Seguridad:** JWT, roles, permisos.
+*   **RNF02 – Rendimiento:** Tiempo de respuesta <2s.
+*   **RNF03 – Disponibilidad:** 99%.
+*   **RNF04 – Escalabilidad:** Microservicios.
+*   **RNF05 – Usabilidad:** Interfaz intuitiva.
+*   **RNF06 – Mantenibilidad:** PEP8, REST, documentación.
+*   **RNF07 – Integridad de Datos:** Restricciones y validaciones.
+
+## 3. Reglas de Negocio (RN)
+
+*   **RN01:** Una mascota no puede tener dos citas el mismo día.
+*   **RN02:** Un cliente solo puede cancelar sus propias citas.
+*   **RN03:** Solo el administrador puede registrar peluqueros.
+*   **RN04:** Los horarios solo pueden ser gestionados por el administrador.
+*   **RN05:** Toda cita debe estar asociada a un peluquero disponible.
+*   **RN06:** Estados permitidos: Pendiente, Confirmada, Cancelada, Finalizada.
+
+# Diseño y Arquitectura
+
+En esta sección se describe el stack tecnológico y la arquitectura del sistema **PelusasSpa**, basada en microservicios desplegados en contenedores, utilizando el modelo C4.
+
+## 1. Tecnologías, Frameworks y Lenguajes Utilizados
+
+### Lenguaje de Programación
+*   **Python 3.11+**: Lenguaje principal para el desarrollo backend basado en Django y Django REST Framework debido a su rapidez de desarrollo, mantenibilidad y ecosistema maduro.
+
+### Frameworks Backend
+*   **Django 5**: Framework principal para la construcción de cada microservicio por su robustez, modularidad y ORM integrado.
+*   **Django REST Framework (DRF)**: Framework utilizado para crear APIs RESTful, proporcionando Serializers, Viewsets, Routers, Autenticación JWT y Control de permisos por roles.
+
+### Arquitectura de Microservicios
+El sistema se divide en dos servicios independientes:
+
+*   **UserService**:
+    *   Gestión de usuarios, autenticación, roles (cliente, peluquero, administrador).
+    *   Generación de tokens JWT.
+    *   Manejo de cuentas y permisos.
+*   **Cita-Cliente Service** (Cliente + Mascota + Cita + Peluquero):
+    *   Gestión de clientes.
+    *   Gestión de mascotas.
+    *   Agendamiento y validación de citas.
+    *   Gestión de horarios de peluqueros.
+    *   Cambio de estado de citas.
+
+### Contenedores y Orquestación
+*   **Docker**: Utilizado para empaquetar cada microservicio en contenedores independientes, asegurando que funcionen igual en desarrollo, pruebas y producción.
+*   **Docker Compose**: Permite levantar base de datos, microservicios, API Gateway, redes internas y volúmenes con un solo comando.
+
+### API Gateway
+**Kong API Gateway** se implementa como el punto de entrada unificado para gestionar el tráfico hacia los microservicios. Sus funciones principales incluyen:
+
+*   **Ruteo:** Distribución inteligente de solicitudes entre servicios.
+*   **Seguridad:** Centralización de políticas de acceso y protección.
+*   **Control de Tráfico:** Gestión de carga y limitación de tasas (rate limiting).
+*   **Versionado:** Soporte para múltiples versiones de la API simultáneamente.
+
+Esta capa adicional aporta **escalabilidad** y **desacoplamiento** al sistema.
+
+### Autenticación y Autorización
+*   **JWT (JSON Web Tokens)**: Mecanismo para iniciar sesión, mantener sesiones seguras y transmitir roles de usuario en el token. Utilizado principalmente con `djangorestframework-simplejwt`.
+
+## 2. Modelo C4 – Contexto
+
+El diagrama de contexto muestra la interacción entre los diferentes tipos de usuarios (administrador, peluquero y cliente) y el sistema PelusasSpa como un conjunto de servicios.
+
+![Diagrama C4 de Contexto](.quarto/img/m1.png){fig-align="center" width="80%"}
+
+## 3. Modelo C4 – Contenedores
+
+El diagrama de contenedores representa los principales contenedores que conforman el sistema, incluyendo el frontend web, los microservicios backend y la base de datos.
+
+![Diagrama C4 de Contenedores](.quarto/img/m2.png){fig-align="center" width="80%"}
+
+## 4. Modelo C4 – Componentes
+
+El diagrama de componentes detalla la estructura interna de cada microservicio, mostrando componentes como gestión de usuarios, mascotas y citas.
+
+![Diagrama C4 de Componentes](.quarto/img/m3.png){fig-align="center" width="80%"}
+
+## 5. Modelo C4 – Despliegue
+
+El diagrama de despliegue describe cómo los microservicios se ejecutan dentro de contenedores y cómo se comunican dentro del entorno de ejecución.
+
+![Diagrama C4 de Despliegue](.quarto/img/m4.png){fig-align="center" width="80%"}
+
+# Pruebas del Sistema
+
+Esta sección describe las estrategias de prueba aplicadas al sistema **PelusasSpa**.
+
+## 1. Pruebas Unitarias
+
+Las pruebas unitarias se realizan de manera individual sobre cada microservicio, validando el correcto funcionamiento de sus métodos y lógica de negocio.
+
+::: {layout-ncol=2}
+![Pruebas Unitarias - Usuario Service](.quarto/img/p1.2.png){fig-align="center" width="80%"}
+
+![Pruebas Unitarias - Citas Service](.quarto/img/p1.png){fig-align="center" width="80%"}
+:::
+
+## 2. Pruebas Funcionales
+
+Las pruebas funcionales evalúan el comportamiento del sistema completo, verificando la correcta interacción entre los microservicios.
+
+::: {layout-ncol=2}
+![Flujo de Pruebas Funcionales](.quarto/img/PF1.png){fig-align="center" width="80%"}
+
+![Respuesta Login](.quarto/img/RF2.png){fig-align="center" width="80%"}
+
+![Respuesta Creación](.quarto/img/RF3.png){fig-align="center" width="80%"}
+:::
+
+# Despliegue del Sistema
+
+## 1. Entorno de Despliegue
+
+El sistema PelusasSpa se despliega utilizando contenedores Docker, lo que permite ejecutar cada componente del sistema de manera aislada.
+
+![Uso de Docker](.quarto/img/img1.png){fig-align="center" width="80%"}
+
+## 2. Microservicios del Sistema
+
+El sistema está compuesto por dos microservicios principales:
+
+*   **Microservicio de Gestión de Usuarios:** Encargado del registro, autenticación y administración de usuarios.
+    ![Microservicio Usuarios](.quarto/img/us.png){fig-align="center" width="80%"}
+
+*   **Microservicio de Gestión de Citas:** Responsable de la creación, consulta y administración de las citas.
+    ![Microservicio Citas](.quarto/img/cs1.png){fig-align="center" width="80%"}
+
+## 3. Configuración del Despliegue
+
+El despliegue del sistema utiliza variables de entorno para definir parámetros como puertos y credenciales.
+
+::: {layout-ncol=2}
+![Servidor Citas](.quarto/img/citaserver.png){fig-align="center" width="80%"}
+
+![Servidor Usuarios](.quarto/img/usuarioserver.png){fig-align="center" width="80%"}
+:::
+
+# Guía de Puesta en Marcha Integral
+
+Para operar el sistema completo, es necesario seguir un orden de ejecución específico para garantizar la disponibilidad de los servicios antes de iniciar la interfaz de usuario.
+
+## 1. Infraestructura Backend (Docker)
+
+El backend debe iniciarse primero para que la API esté disponible.
+
+1.  **Iniciar Docker Desktop:** Asegúrese de que el motor de Docker esté corriendo.
+2.  **Generar y Levantar Contenedores:** En la raíz del proyecto backend, ejecute:
+    ```bash
+    docker-compose up --build
+    ```
+    *   Este comando compila las imágenes de los microservicios y levanta la orquestación definida.
+    *   El **API Gateway** quedará expuesto (generalmente en el puerto `8000`) para recibir peticiones externas.
+
+## 2. Conectividad Móvil (Expo Go)
+
+La comunicación entre el dispositivo móvil (Expo Go) y el backend (Docker en localhost) requiere configuración de red, ya que se ejecutan en entornos separados.
+
+### Arquitectura de Comunicación
+*   **Backend:** Corre dentro de contenedores Docker, expuestos al `localhost` de su computadora.
+*   **Expo Go:** Corre en un dispositivo físico o emulador.
+
+### Configuración de Acceso
+Para que Expo Go "vea" al backend:
+
+1.  **En Dispositivo Físico (Misma Wi-Fi):**
+    *   Obtenga la **IP Local** de su PC (ej. `ipconfig` $\to$ `192.168.1.15`).
+    *   Configure la URL de la API en la app móvil apuntando a esa IP: `http://192.168.1.15:8000`.
+2.  **En Emulador Android:**
+    *   Utilice la dirección reservada `http://10.0.2.2:8000` que redirige al localhost de la PC.
+
+## 3. Ejecución del Cliente Móvil
+
+Una vez el backend está operativo:
+
+1.  En una nueva terminal, navegue al directorio de la app móvil.
+2.  Ejecute `npx expo start` para iniciar el servidor de desarrollo (Metro Bundler).
+3.  Escanee el código QR con su celular o presione `a` (Android) / `i` (iOS) para abrir el emulador.
+
+# Aplicación Móvil (Expo Go)
+
+La solución incluye una aplicación móvil para clientes, desarrollada con React Native y el framework Expo.
+
+## 1. Funcionalidades Principales
+
+La app móvil está diseñada para ofrecer una experiencia de usuario fluida y enfocada en las necesidades del cliente:
+
+*   **Gestión de Perfil:** Los usuarios pueden ver y actualizar su información personal.
+*   **Gestión de Mascotas:** Permite registrar, editar y eliminar las mascotas asociadas a su cuenta.
+*   **Reserva de Citas:** Los clientes pueden agendar nuevas citas, ver su historial y cancelar citas existentes.
+*   **Notificaciones:** Recibe recordatorios y confirmaciones de sus citas.
+
+## 2. Rol de Expo Go
+
+**Expo Go** es una herramienta fundamental en nuestro ciclo de desarrollo, ya que permite:
+
+*   **Desarrollo Rápido:** Probar la aplicación en dispositivos físicos (iOS y Android) sin necesidad de compilar el código nativo.
+*   **Acceso a APIs Nativas:** Facilita el uso de funcionalidades del dispositivo como la cámara, notificaciones push y almacenamiento local.
+*   **Publicación Simplificada:** Simplifica el proceso de despliegue en las tiendas de aplicaciones.
+
+## 3. Vistas de la App Móvil
+
+A continuación se muestran algunas capturas de la interfaz de cliente en la aplicación móvil.
+
+## Acceso y Principal
+::: {layout-ncol=2}
+![Inicio de Sesión](.quarto/img/inicio_sesion.png){fig-align="center" width="300"}
+
+![Crear Cuenta](.quarto/img/registro_usuario.png){fig-align="center" width="300"}
+:::
+
+## Interfaz del Cliente
+::: {layout-ncol=3}
+![Interfaz Cliente](.quarto/img/dashboard_movil.png){fig-align="center" width="300"}
+
+![Mis mascotas](.quarto/img/lista_mascotas.png){fig-align="center" width="300"}
+
+![Reserva de Cita](.quarto/img/reservacion_cita.png){fig-align="center" width="300"}
+:::
+
+## 4. Configuración y Ejecución
+
+Para la puesta en marcha de la aplicación móvil:
+
+1.  **Instalar dependencias:** `npm install`
+2.  **Configurar API Key:** Establece la `GEMINI_API_KEY` en el archivo `.env.local` con tu clave de API de Gemini.
+3.  **Ejecutar la app:** `npm run dev`
+
+## 5. Notas sobre la carpeta .expo
+
+**¿Por qué tengo una carpeta llamada ".expo" en mi proyecto?**
+
+La carpeta `.expo` se crea automáticamente cuando se inicia un proyecto Expo mediante el comando `expo start`.
+
+**¿Qué contienen los archivos?**
+
+*   `devices.json`: Contiene información sobre los dispositivos que han abierto recientemente este proyecto. Se utiliza para poblar la lista de "Sesiones de desarrollo".
+*   `packager-info.json`: Contiene números de puerto y PIDs de procesos utilizados para servir la aplicación al dispositivo móvil o simulador.
+*   `settings.json`: Contiene la configuración del servidor utilizada para servir el manifiesto de la aplicación.
+
+**¿Debo incluir la carpeta ".expo" en el control de versiones (git)?**
+
+**No**, no debes compartir la carpeta `.expo`. No contiene información relevante para otros desarrolladores del proyecto y es específica de tu máquina local. Por defecto, esta carpeta se añade automáticamente al archivo `.gitignore` al crear el proyecto.
