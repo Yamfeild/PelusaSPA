@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, Alert, TextInput, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +20,17 @@ export const ProfileScreen = ({ navigation }: any) => {
     placeholder: isDarkMode ? '#aaa' : '#888'
   };
 
+  const handleLogout = () => {
+  Alert.alert(
+    "Cerrar Sesión",
+    "¿Estás seguro de que quieres salir?",
+    [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Sí, salir", onPress: signOut, style: "destructive" }
+    ]
+  );
+};
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: dynamicColors.bg }]}>
       
@@ -27,7 +38,7 @@ export const ProfileScreen = ({ navigation }: any) => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back-ios" size={20} color={dynamicColors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: dynamicColors.text }]}>Ajustes de Perfil</Text>
+        <Text style={[styles.headerTitle, { color: dynamicColors.text }]}>Perfil</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -104,7 +115,7 @@ export const ProfileScreen = ({ navigation }: any) => {
         
         <View style={styles.actionButtons}>
           
-          <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <MaterialIcons name="logout" size={20} color="#ef4444" />
             <Text style={styles.logoutText}>Cerrar Sesión</Text>
           </TouchableOpacity>

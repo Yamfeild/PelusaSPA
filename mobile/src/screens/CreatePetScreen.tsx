@@ -26,29 +26,54 @@ export const CreatePetScreen = ({ navigation }: any) => {
     headerBorder: isDarkMode ? '#222222' : '#f0f0f0',
   };
 
-  const handleSave = async () => {
-    if (!petData.nombre.trim() || !petData.raza.trim() || !petData.edad.trim()) {
-      Alert.alert("Error", "Todos los campos marcados con * son obligatorios");
-      return;
-    }
+const validateData = () => {
+  const { nombre, raza, edad } = petData;
+  
+  // 1. Validar campos vacíos
+  if (!nombre.trim() || !raza.trim() || !edad.trim()) {
+    Alert.alert("Campos incompletos", "Por favor rellena todos los campos marcados con *");
+    return false;
+  }
 
-    setLoading(true);
-    try {
-      await mascotasService.createMascota({
-        nombre: petData.nombre,
-        raza: petData.raza,
-        edad: parseInt(petData.edad) || 0,
-      });
+  // 2. Validar que el nombre no tenga números (solo letras y espacios)
+  const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+  if (!nameRegex.test(nombre)) {
+    Alert.alert("Nombre no válido", "El nombre de la mascota solo debe contener letras.");
+    return false;
+  }
 
-      Alert.alert("Éxito", `${petData.nombre} ha sido registrado correctamente.`, [
-        { text: "OK", onPress: () => navigation.goBack() },
-      ]);
-    } catch (error: any) {
-      Alert.alert("Error", error.response?.data?.error || "No se pudo registrar la mascota");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 3. Validar edad lógica
+  const edadNum = parseInt(edad);
+  if (isNaN(edadNum) || edadNum < 0 || edadNum > 30) {
+    Alert.alert("Edad no válida", "Por favor ingresa una edad realista (0 a 30 años).");
+    return false;
+  }
+
+  return true;
+};
+
+const handleSave = async () => {
+  if (!validateData()) return; // Si no pasa la validación, nos detenemos
+
+  setLoading(true);
+  try {
+    await mascotasService.createMascota({
+      nombre: petData.nombre.trim(),
+      raza: petData.raza.trim(),
+      edad: parseInt(petData.edad),
+    });
+
+    Alert.alert("¡Excelente!", `${petData.nombre} ya es parte de la familia.`, [
+      { text: "Ver mis mascotas", onPress: () => navigation.goBack() },
+    ]);
+  } catch (error: any) {
+    // Si el servidor responde con un 400 (Bad Request) mostramos el detalle
+    const serverError = error.response?.data?.error || error.response?.data?.detail;
+    Alert.alert("No se pudo guardar", serverError || "Revisa los datos e intenta de nuevo.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: dynamicColors.bg }]} edges={['top']}>
@@ -88,7 +113,9 @@ export const CreatePetScreen = ({ navigation }: any) => {
               borderColor: dynamicColors.inputBorder,
               color: dynamicColors.text 
             }]} 
-            placeholder="Nombre de la mascota" 
+            placeholder="Ej: Bobby" 
+            autoCapitalize="words"
+            maxLength={20}
             placeholderTextColor={dynamicColors.placeholder}
             value={petData.nombre}
             onChangeText={(val) => setPetData({...petData, nombre: val})}
@@ -105,7 +132,10 @@ export const CreatePetScreen = ({ navigation }: any) => {
             placeholder="Raza de la mascota"
             placeholderTextColor={dynamicColors.placeholder}
             value={petData.raza}
-            onChangeText={(val) => setPetData({...petData, raza: val})}
+            onChangeText={(val) => {
+              const soloLetras = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+              setPetData({...petData, raza: soloLetras});
+            }}
             editable={!loading}
           />
 
@@ -116,12 +146,22 @@ export const CreatePetScreen = ({ navigation }: any) => {
               borderColor: dynamicColors.inputBorder,
               color: dynamicColors.text 
             }]} 
-            placeholder="Edad en años" 
+            placeholder="0 a 30 años" 
+            maxLength={2}
             placeholderTextColor={dynamicColors.placeholder}
             keyboardType="numeric"
             value={petData.edad}
-            onChangeText={(val) => setPetData({...petData, edad: val})}
+            onChangeText={(val) => {
+
+              const num = val.replace(/[^0-9]/g, '');
+              if (parseInt(num) > 30) {
+                setPetData({...petData, edad: '30'});
+              } else {
+                setPetData({...petData, edad: num});
+              }
+            }}
             editable={!loading}
+            
           />
         </View>
 

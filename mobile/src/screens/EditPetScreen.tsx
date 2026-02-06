@@ -33,25 +33,46 @@ export const EditPetScreen = ({ navigation, route }: any) => {
     headerBorder: isDarkMode ? '#222222' : '#e0e0e0',
   };
 
-  const handleSave = async () => {
-    if (!petData.nombre.trim() || !petData.raza.trim() || !petData.edad.trim()) {
-      Alert.alert("Error", "Todos los campos son obligatorios");
-      return;
+  const validateData = () => {
+    const { nombre, raza, edad } = petData;
+    
+    if (!nombre.trim() || !raza.trim() || !edad.trim()) {
+      Alert.alert("Campos incompletos", "Por favor rellena todos los campos.");
+      return false;
     }
+
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+    if (!nameRegex.test(nombre)) {
+      Alert.alert("Nombre no válido", "El nombre solo debe contener letras.");
+      return false;
+    }
+
+    const edadNum = parseInt(edad);
+    if (isNaN(edadNum) || edadNum < 0 || edadNum > 30) {
+      Alert.alert("Edad no válida", "La edad debe estar entre 0 y 30 años.");
+      return false;
+    }
+
+    return true;
+  };
+
+const handleSave = async () => {
+    if (!validateData()) return;
 
     setLoading(true);
     try {
       await mascotasService.updateMascota(petId, {
-        nombre: petData.nombre,
-        raza: petData.raza,
-        edad: parseInt(petData.edad) || 0,
+        nombre: petData.nombre.trim(),
+        raza: petData.raza.trim(),
+        edad: parseInt(petData.edad),
       });
 
-      Alert.alert("Éxito", "Los datos han sido actualizados.", [
-        { text: "Perfecto", onPress: () => navigation.goBack() },
+      Alert.alert("¡Hecho!", "La información se ha actualizado correctamente.", [
+        { text: "OK", onPress: () => navigation.goBack() },
       ]);
     } catch (error: any) {
-      Alert.alert("Error", "No se pudo actualizar la mascota");
+      const serverError = error.response?.data?.error || "No se pudo actualizar la mascota";
+      Alert.alert("Error", serverError);
     } finally {
       setLoading(false);
     }
@@ -90,12 +111,9 @@ export const EditPetScreen = ({ navigation, route }: any) => {
         <View style={styles.form}>
           <Text style={[styles.label, { color: dynamicColors.text }]}>Nombre *</Text>
           <TextInput 
-            style={[styles.input, { 
-              backgroundColor: dynamicColors.inputBg, 
-              borderColor: dynamicColors.inputBorder,
-              color: dynamicColors.text 
-            }]} 
-            placeholderTextColor={dynamicColors.placeholder}
+            style={[styles.input, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.inputBorder, color: dynamicColors.text }]} 
+            autoCapitalize="words"
+            maxLength={20}
             value={petData.nombre}
             onChangeText={(val) => setPetData({...petData, nombre: val})}
             editable={!loading}
@@ -103,28 +121,31 @@ export const EditPetScreen = ({ navigation, route }: any) => {
 
           <Text style={[styles.label, { color: dynamicColors.text }]}>Raza *</Text>
           <TextInput 
-            style={[styles.input, { 
-              backgroundColor: dynamicColors.inputBg, 
-              borderColor: dynamicColors.inputBorder,
-              color: dynamicColors.text 
-            }]} 
-            placeholderTextColor={dynamicColors.placeholder}
+            style={[styles.input, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.inputBorder, color: dynamicColors.text }]} 
             value={petData.raza}
-            onChangeText={(val) => setPetData({...petData, raza: val})}
+            onChangeText={(val) => {
+              // RESTRICCIÓN: Solo letras en Raza
+              const soloLetras = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+              setPetData({...petData, raza: soloLetras});
+            }}
             editable={!loading}
           />
 
           <Text style={[styles.label, { color: dynamicColors.text }]}>Edad (años) *</Text>
           <TextInput 
-            style={[styles.input, { 
-              backgroundColor: dynamicColors.inputBg, 
-              borderColor: dynamicColors.inputBorder,
-              color: dynamicColors.text 
-            }]} 
-            placeholderTextColor={dynamicColors.placeholder}
+            style={[styles.input, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.inputBorder, color: dynamicColors.text }]} 
             keyboardType="numeric"
+            maxLength={2}
             value={petData.edad}
-            onChangeText={(val) => setPetData({...petData, edad: val})}
+            onChangeText={(val) => {
+              // RESTRICCIÓN: Solo números y máximo 30
+              const num = val.replace(/[^0-9]/g, '');
+              if (parseInt(num) > 30) {
+                setPetData({...petData, edad: '30'});
+              } else {
+                setPetData({...petData, edad: num});
+              }
+            }}
             editable={!loading}
           />
         </View>

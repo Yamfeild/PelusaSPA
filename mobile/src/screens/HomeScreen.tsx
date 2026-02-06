@@ -7,7 +7,7 @@ import { COLORS } from '../constants/theme';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext'; 
 import { peluquerosService, Peluquero } from '../services/peluquerosService';
-
+import { notificacionService, Notificacion } from '../services/notificacionesService';
 import { mascotasService } from '../services/mascotasService';
 import { citasService, Cita } from '../services/citasService';
 
@@ -20,6 +20,15 @@ export const HomeScreen = ({ navigation }: any) => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState('TODOS');
   const [peluqueros, setPeluqueros] = useState<Peluquero[]>([]);
+  const PRIORIDAD_ESTADO: Record<string, number> = {
+    'PENDIENTE': 1,
+    'ACEPTADA': 2,
+    'CONFIRMADA': 2,
+    'CANCELADA': 3,
+    'FINALIZADA': 4,
+    'COMPLETADA': 4,
+    'TERMINADA': 4
+  };
 
   const dynamicColors = {
   bg: isDarkMode ? '#121212' : '#FFFFFF',
@@ -30,26 +39,27 @@ export const HomeScreen = ({ navigation }: any) => {
   tabInactive: isDarkMode ? '#333' : '#F0F0F0',
 };
 
- const loadData = async () => {
-    try {
-     
-      const [petsData, citasData, peluquerosData] = await Promise.all([
+const loadData = async () => {
+  
+  try {
+      // Usamos allSettled para que si peluqueros o mascotas fallan, las citas se carguen igual
+      const results = await Promise.allSettled([
         mascotasService.getMascotas(),
-        citasService.getCitas(), 
-        peluquerosService.getPeluqueros() 
+        citasService.getCitas(),
+        peluquerosService.getPeluqueros(),
       ]);
-      
-      setPets(petsData);
-      setCitas(citasData);
-      setPeluqueros(peluquerosData); 
-      
+
+      if (results[0].status === 'fulfilled') setPets(results[0].value);
+      if (results[1].status === 'fulfilled') setCitas(results[1].value);
+      if (results[2].status === 'fulfilled') setPeluqueros(results[2].value);
+
     } catch (error) {
-      console.error("Error cargando datos del Home:", error);
+      console.error("Error crítico en Home:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+};
 
   useFocusEffect(
   useCallback(() => {
@@ -69,33 +79,53 @@ export const HomeScreen = ({ navigation }: any) => {
       </View>
     );
   }
-  // Lógica para filtrar las citas
-// Lógica para filtrar y ORDENAR las citas
-  const citasFiltradas = citas
-    .filter(cita => {
-      if (activeFilter === 'TODOS') return true;
-      
-      const estadoCita = cita.estado.toUpperCase();
-      
-      if (activeFilter === 'ACEPTADA') {
-        return estadoCita === 'ACEPTADA' || estadoCita === 'CONFIRMADA';
-      }
-      
-      if (activeFilter === 'FINALIZADA') {
-        return estadoCita === 'FINALIZADA' || estadoCita === 'COMPLETADA' || estadoCita === 'TERMINADA';
-      }
-      
-      return estadoCita === activeFilter;
-    })
-    .sort((a, b) => {
-      const dateTimeA = new Date(`${a.fecha}T${a.hora_inicio}`);
-      const dateTimeB = new Date(`${b.fecha}T${b.hora_inicio}`);
-      
-      // Orden ASCENDENTE (de la más cercana a la más lejana)
-      return dateTimeA.getTime() - dateTimeB.getTime();
-    });
+
+const citasFiltradas = citas
+  .filter(cita => {
+    if (activeFilter === 'TODOS') return true;
+    const estadoCita = (cita.estado || '').toUpperCase();
+    
+    if (activeFilter === 'ACEPTADA') {
+      return estadoCita === 'ACEPTADA' || estadoCita === 'CONFIRMADA';
+    }
+    if (activeFilter === 'FINALIZADA') {
+      return estadoCita === 'FINALIZADA' || estadoCita === 'COMPLETADA' || estadoCita === 'TERMINADA';
+    }
+    return estadoCita === activeFilter;
+  })
+  .sort((a, b) => {
+    // Normalizamos los estados a Mayúsculas
+    const estadoA = (a.estado || 'PENDIENTE').toUpperCase();
+    const estadoB = (b.estado || 'PENDIENTE').toUpperCase();
+
+    // Accedemos a la prioridad usando el tipado Record definido arriba
+    const prioridadA = PRIORIDAD_ESTADO[estadoA] ?? 99;
+    const prioridadB = PRIORIDAD_ESTADO[estadoB] ?? 99;
+
+    // 1. Comparar por estado primero
+    if (prioridadA !== prioridadB) {
+      return prioridadA - prioridadB;
+    }
+
+    // 2. Si el estado es el mismo, comparar por fecha/hora
+    const fechaA = new Date(`${a.fecha}T${a.hora_inicio}`).getTime();
+    const fechaB = new Date(`${b.fecha}T${b.hora_inicio}`).getTime();
+    
+    return fechaA - fechaB;
+  });
 
   const handleCancelarCita = (cita: Cita) => {
+    // VALIDACIÓN DE SEGURIDAD ANTES DE ENVIAR AL BACKEND
+    const fechaCita = new Date(`${cita.fecha}T${cita.hora_inicio}`);
+    const ahora = new Date();
+
+    // Si la cita es en menos de 2 horas (por ejemplo), avisar al usuario
+    const diferenciaHoras = (fechaCita.getTime() - ahora.getTime()) / (1000 * 60 * 60);
+
+    if (diferenciaHoras < 0) {
+      Alert.alert("Acción no permitida", "No puedes cancelar una cita que ya ha pasado.");
+      return;
+    }
   Alert.alert(
     "Confirmar Cancelación",
     `¿Estás seguro de que deseas cancelar la cita de ${cita.mascota_nombre}?`,
@@ -132,6 +162,27 @@ export const HomeScreen = ({ navigation }: any) => {
   );
 };
 
+const handleReprogramar = (cita: Cita) => {
+  Alert.alert(
+    "Reprogramar Cita",
+    `¿Deseas cambiar la fecha de la cita para ${cita.mascota_nombre}? \n\nSe mantendrán los detalles del servicio y podrás elegir un nuevo horario.`,
+    [
+      { text: "Cancelar", style: "cancel" },
+      { 
+        text: "Continuar", 
+        onPress: () => {
+          navigation.navigate('Reservar', { 
+            reprogramarCitaId: cita.id,
+            mascotaId: cita.mascota, // ID de la mascota
+            servicioId: cita.servicio, // ID del servicio
+            peluqueroId: cita.peluquero_id
+          });
+        } 
+      }
+    ]
+  );
+};
+
 const getNombrePeluquero = (id: number) => {
   const p = peluqueros.find(item => item.id === id);
   return p ? p.nombre : `ID: ${id}`; 
@@ -156,9 +207,15 @@ const getNombrePeluquero = (id: number) => {
             </Text>
           </View>
         </View>
-        <TouchableOpacity style={[styles.notifButton, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f5f5f5' }]}>
-          <MaterialIcons name="notifications-none" size={24} color={COLORS.primary} />
-        </TouchableOpacity>
+        <TouchableOpacity 
+            style={[styles.notifButton, { backgroundColor: isDarkMode ? '#2c2c2c' : '#f5f5f5' }]}
+            onPress={() => navigation.navigate('Notificaciones')}
+          >
+            <MaterialIcons name="notifications-none" size={24} color={COLORS.primary} />
+            
+            {/* ELIMINA TODO ESTE BLOQUE DE ABAJO */}
+            {/* unreadCount > 0 && ( ... ) */}
+          </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -309,12 +366,8 @@ const getNombrePeluquero = (id: number) => {
                   <View style={[styles.cardFooter, { borderTopColor: dynamicColors.border }]}>
                     <TouchableOpacity 
                       style={[styles.btnDetalles, { borderColor: COLORS.primary + '40' }]}
-                      onPress={() => navigation.navigate('Reservar', { 
-                        reprogramarCitaId: cita.id,
-                        mascotaId: cita.mascota,
-                        servicioId: cita.servicio,
-                        peluqueroId: cita.peluquero_id
-                      })}
+                      // Llamamos a la función de confirmación pasando la cita actual
+                      onPress={() => handleReprogramar(cita)} 
                     >
                       <MaterialIcons name="event" size={18} color={COLORS.primary} />
                       <Text style={styles.btnTextPrimary}> Reprogramar</Text>
@@ -530,4 +583,22 @@ emptyText: { // <--- Asegúrate que este nombre coincida
     borderColor: COLORS.primary,
     elevation: 3,
   },
+  badgeContainer: {
+  position: 'absolute',
+  top: 5,
+  right: 5,
+  backgroundColor: '#FF4444',
+  borderRadius: 10,
+  width: 18,
+  height: 18,
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderWidth: 2,
+  borderColor: '#fff', // O usa dynamicColors.bg si quieres que se mezcle
+},
+badgeTextCount: {
+  color: 'white',
+  fontSize: 10,
+  fontWeight: 'bold',
+},
 });

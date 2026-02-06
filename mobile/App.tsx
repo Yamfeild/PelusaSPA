@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext'; // <--- IMPORTANTE
 
 // Pantallas
+import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
@@ -64,10 +65,14 @@ const ClientTabs = () => {
 };
 
 const ClientNavigator = () => (
+
+  
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="ClientTabs" component={ClientTabs} />
     <Stack.Screen name="CreatePet" component={CreatePetScreen} />
     <Stack.Screen name="EditPet" component={EditPetScreen} />
+    <Stack.Screen name="Notificaciones" component={NotificationsScreen} 
+    />
   </Stack.Navigator>
 );
 

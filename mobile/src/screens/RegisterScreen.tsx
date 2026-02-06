@@ -10,7 +10,8 @@ import { authApi} from '../api/client';
 
 export const RegisterScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
-  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     correo: '',
@@ -29,21 +30,66 @@ export const RegisterScreen = ({ navigation }: any) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleRegister = async () => {
-    if (formData.clave !== formData.clave_confirmacion) {
+const handleRegister = async () => {
+    const { 
+      username, correo, clave, clave_confirmacion, 
+      nombre, apellido, identificacion, telefono 
+    } = formData;
+
+    // 1. Validar campos obligatorios
+    if (!username || !correo || !clave || !nombre || !apellido || !identificacion) {
+      Alert.alert("Campos incompletos", "Por favor, llena todos los campos marcados con *");
+      return;
+    }
+
+    // 2. Validar Email (Regex básico)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correo)) {
+      Alert.alert("Email no válido", "Introduce un correo electrónico correcto.");
+      return;
+    }
+
+    // 3. Validar Seguridad de Contraseña (Mínimo 8 caracteres)
+    if (clave.length < 8) {
+      Alert.alert("Seguridad", "La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    // 4. Confirmar coincidencia
+    if (clave !== clave_confirmacion) {
       Alert.alert("Error", "Las contraseñas no coinciden");
       return;
     }
 
+    // 5. Validar Identificación (Solo números y longitud mínima, ej: 10 para cédula)
+    if (identificacion.length < 8) {
+      Alert.alert("Identificación", "Introduce un número de identificación válido.");
+      return;
+    }
+
     try {
-      const response = await authApi.post('/api/auth/registro/', formData);
+      // Usamos .trim() en los strings para limpiar espacios accidentales
+      const dataToSend = {
+        ...formData,
+        username: username.trim().toLowerCase(),
+        correo: correo.trim().toLowerCase(),
+        nombre: nombre.trim(),
+        apellido: apellido.trim(),
+      };
+
+      const response = await authApi.post('/api/auth/registro/', dataToSend);
       if (response.status === 201 || response.status === 200) {
-        Alert.alert("¡Bienvenido!", "Registro exitoso.");
-        navigation.navigate('Login');
+        Alert.alert("¡Bienvenido!", "Registro exitoso. Ya puedes iniciar sesión.", [
+          { text: "Ir al Login", onPress: () => navigation.navigate('Login') }
+        ]);
       }
     } catch (error: any) {
-      console.error("Detalle del error:", error.response?.data);
-      Alert.alert("Error", "No se pudo registrar. Revisa que los datos sean únicos.");
+      // Capturamos el error específico del backend si existe
+      const backendMessage = error.response?.data?.error || error.response?.data?.detail;
+      Alert.alert(
+        "Error de Registro", 
+        backendMessage || "El usuario o correo ya están registrados."
+      );
     }
   };
 
@@ -65,9 +111,9 @@ export const RegisterScreen = ({ navigation }: any) => {
         <Text style={styles.label}>Nombre de Usuario *</Text>
         <TextInput 
           style={styles.input} 
-          placeholder="ej: maria_canina" 
-          autoCapitalize="none"
-          onChangeText={(val) => handleChange('username', val)} 
+          placeholder="Usuario" 
+          value={formData.username}
+          onChangeText={(val) => handleChange('username', val)}
         />
 
         <Text style={styles.label}>Correo Electrónico *</Text>
@@ -96,7 +142,12 @@ export const RegisterScreen = ({ navigation }: any) => {
           style={styles.input} 
           placeholder="Cédula o DNI" 
           keyboardType="numeric"
-          onChangeText={(val) => handleChange('identificacion', val)} 
+          maxLength={10} 
+          value={formData.identificacion}
+          onChangeText={(val) => {
+            const num = val.replace(/[^0-9]/g, '');
+            handleChange('identificacion', num);
+          }} 
         />
 
         <Text style={styles.label}>Teléfono</Text>
@@ -104,8 +155,13 @@ export const RegisterScreen = ({ navigation }: any) => {
           style={styles.input} 
           placeholder="099..." 
           keyboardType="phone-pad"
-          onChangeText={(val) => handleChange('telefono', val)} 
-        />
+          maxLength={10}
+          value={formData.telefono}
+          onChangeText={(val) => {
+            const num = val.replace(/[^0-9]/g, '');
+            handleChange('telefono', num);
+          }}
+         />       
 
         <Text style={styles.label}>Dirección</Text>
         <TextInput 
@@ -116,20 +172,44 @@ export const RegisterScreen = ({ navigation }: any) => {
 
         {/* --- SEGURIDAD --- */}
         <Text style={styles.label}>Contraseña *</Text>
-        <TextInput 
-          style={styles.input} 
-          placeholder="••••••••" 
-          secureTextEntry 
-          onChangeText={(val) => handleChange('clave', val)} 
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput 
+            style={styles.inputPassword} 
+            placeholder="••••••••" 
+            secureTextEntry={!showPassword} // Si showPassword es false, se oculta
+            onChangeText={(val) => handleChange('clave', val)} 
+          />
+          <TouchableOpacity 
+            style={styles.eyeIcon} 
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <MaterialIcons 
+              name={showPassword ? "visibility" : "visibility-off"} 
+              size={24} 
+              color={COLORS.textMuted} 
+            />
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Confirmar Contraseña *</Text>
-        <TextInput 
-          style={styles.input} 
-          placeholder="••••••••" 
-          secureTextEntry 
-          onChangeText={(val) => handleChange('clave_confirmacion', val)} 
-        />
+          <View style={styles.passwordContainer}>
+            <TextInput 
+              style={styles.inputPassword} 
+              placeholder="••••••••" 
+              secureTextEntry={!showConfirmPassword} 
+              onChangeText={(val) => handleChange('clave_confirmacion', val)} 
+            />
+            <TouchableOpacity 
+              style={styles.eyeIcon} 
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              <MaterialIcons 
+                name={showConfirmPassword ? "visibility" : "visibility-off"} 
+                size={24} 
+                color={COLORS.textMuted} 
+              />
+            </TouchableOpacity>
+          </View>
 
         <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
           <Text style={styles.registerButtonText}>Crear Cuenta</Text>
@@ -157,5 +237,25 @@ const styles = StyleSheet.create({
   registerButton: { backgroundColor: COLORS.primary, height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 15, elevation: 4 },
   registerButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   footerText: { textAlign: 'center', marginTop: 25, color: COLORS.textMuted, fontSize: 15 },
-  linkText: { color: COLORS.primary, fontWeight: 'bold' }
+  linkText: { color: COLORS.primary, fontWeight: 'bold' },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+    borderRadius: 12,
+    marginBottom: 15,
+    paddingRight: 15, // Espacio para el icono
+  },
+  inputPassword: {
+    flex: 1, // Toma todo el espacio sobrante
+    height: 50,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    color: COLORS.textMain,
+  },
+  eyeIcon: {
+    padding: 5,
+  },
 });

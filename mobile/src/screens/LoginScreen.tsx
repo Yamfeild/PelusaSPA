@@ -12,29 +12,43 @@ export const LoginScreen = ({ navigation }: any) => {
   const [clave, setClave] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { signIn, signOut } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    // Validación básica antes de llamar a la API
+    if (!usuario.trim() || !clave.trim()) {
+      Alert.alert("Campos incompletos", "Por favor ingresa tu usuario y contraseña.");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const usuarioAutenticado = await signIn({ usuario, clave });
+      const usuarioAutenticado = await signIn({ usuario: usuario.trim(), clave });
       
-      
+      // Control de Rol
       if (usuarioAutenticado?.rol && usuarioAutenticado.rol !== 'CLIENTE') {
         Alert.alert(
           "Acceso denegado",
-          "Esta aplicación es solo para clientes. Por favor usa la aplicación web para acceder como administrador o peluquero.",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                
-                signOut();
-              }
-            }
-          ]
+          "Esta aplicación es solo para clientes. Usa la web para otros roles.",
+          [{ text: "OK", onPress: () => signOut() }]
         );
       }
-    } catch (error) {
-      Alert.alert("Error", "Credenciales incorrectas");
+    } catch (error: any) {
+    // Aquí controlamos que no salga el error de Axios crudo
+    console.log("Error completo:", error);
+
+    if (!error.response) {
+      // Si no hay respuesta, es un error de conexión/red
+      Alert.alert("Error de conexión", "No se pudo conectar con el servidor. Revisa tu internet.");
+    } else if (error.response.status === 401) {
+      // Credenciales mal escritas
+      Alert.alert("Acceso denegado", "Usuario o contraseña incorrectos.");
+    } else {
+      // Otros errores (500, 404, etc)
+      Alert.alert("Acceso denegado", "Usuario o contraseña incorrectos.");
+    }
+    } finally {
+      setLoading(false);
     }
   };
 

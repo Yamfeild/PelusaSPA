@@ -11,6 +11,7 @@ import { citasService, Servicio, Horario, Cita } from '../services/citasService'
 import { mascotasService } from '../services/mascotasService';
 import { peluquerosService, Peluquero } from '../services/peluquerosService';
 import { useTheme } from '../context/ThemeContext'; // Importar tema
+import { notificacionService } from '../services/notificacionesService';
 
 interface Pet {
   id: number;
@@ -73,12 +74,13 @@ export const BookingScreen = ({ navigation, route }: any) => {
       loadInitialData();
     }, [])
   );
-
-  useEffect(() => {
-    if (selectedPeluquero && selectedFecha && step === 4) {
-      fetchHorariosDisponibles();
-    }
-  }, [selectedFecha, selectedPeluquero]);
+  
+useEffect(() => {
+  // Solo disparamos si estamos en el paso 4 y tenemos los datos mínimos
+  if (step === 4 && selectedPeluquero && selectedFecha) {
+    fetchHorariosDisponibles();
+  }
+}, [selectedFecha, selectedPeluquero, step]);
 
   useEffect(() => {
     const initReprogramacion = () => {
@@ -121,45 +123,70 @@ export const BookingScreen = ({ navigation, route }: any) => {
   };
 
   const fetchHorariosDisponibles = async () => {
+    
+  if (!selectedPeluquero || !selectedFecha) return;
+
   setLoading(true);
   try {
-    const data = await citasService.getHorarios(selectedPeluquero?.id);
-    const days = [...new Set(data.filter(h => h.activo).map(h => h.dia_semana))];
+    // 1. Cargamos simultáneamente los horarios configurados y todas las citas
+    const [horariosData, todasLasCitas] = await Promise.all([
+      citasService.getHorarios(selectedPeluquero.id),
+      citasService.getCitas() 
+    ]);
+
+    // 2. Filtramos las citas que ya existen para este peluquero en la fecha seleccionada
+    // IMPORTANTE: Solo consideramos citas que NO estén canceladas
+    const citasOcupadas = todasLasCitas.filter(cita => 
+      cita.peluquero_id === selectedPeluquero.id && 
+      cita.fecha === selectedFecha &&
+      cita.estado !== 'cancelada'
+    );
+
+    // 3. Obtener días laborables para el selector de fechas
+    const days = [...new Set(horariosData.filter(h => h.activo).map(h => h.dia_semana))];
     setWorkingDays(days);
+
+    // 4. Calcular el día de la semana actual (ajuste para backend 0-6)
     const [year, month, day] = selectedFecha.split('-').map(Number);
     const fechaObj = new Date(year, month - 1, day);
-
     let dayOfWeek = fechaObj.getDay(); 
     const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     
-    // 1. Filtramos los rangos base del peluquero
-    const rangosBase = data.filter(h => h.dia_semana === dayIndex && h.activo);
+    const rangosBase = horariosData.filter(h => h.dia_semana === dayIndex && h.activo);
     
-    // 2. Función para generar slots de 30 minutos
-    const generarSlots = (horaInicio: string, horaFin: string) => {
+    // 5. Función para generar slots y marcar los ocupados
+      const generarSlots = (horaInicio: string, horaFin: string) => {
       const slots = [];
+      // Usamos una fecha base cualquiera para manipular las horas
       let current = new Date(`2026-01-01T${horaInicio}`);
       const end = new Date(`2026-01-01T${horaFin}`);
 
       while (current < end) {
+        // 1. Definimos la hora de inicio del slot actual
         const inicioStr = current.toTimeString().substring(0, 5);
-        // Sumar 30 minutos
+        
+        // 2. Calculamos la hora de fin (sumando 60 min)
         current.setMinutes(current.getMinutes() + 60);
         const finStr = current.toTimeString().substring(0, 5);
         
-        // No agregar el slot si se pasa de la hora de fin
         if (current <= end) {
+          // 3. Verificamos disponibilidad comparando SOLO HH:mm
+          const ocupado = citasOcupadas.some(cita => {
+            // Cortamos la hora de la cita por si trae segundos (00:00:00 -> 00:00)
+            const horaCitaNormalizada = cita.hora_inicio.substring(0, 5);
+            return horaCitaNormalizada === inicioStr;
+          });
+
           slots.push({
             hora_inicio: inicioStr,
             hora_fin: finStr,
-            activo: true
+            activo: !ocupado // Si está ocupado, activo es false
           });
         }
       }
       return slots;
     };
 
-    // 3. Procesar todos los rangos y aplanarlos en una sola lista
     let todosLosHorarios: any[] = [];
     rangosBase.forEach(rango => {
       const slotsDelRango = generarSlots(rango.hora_inicio, rango.hora_fin);
@@ -168,8 +195,8 @@ export const BookingScreen = ({ navigation, route }: any) => {
 
     setHorarios(todosLosHorarios);
   } catch (error) {
-    console.error("Error cargando horarios:", error);
-    Alert.alert("Error", "No se pudieron generar los horarios.");
+    console.error("Error cargando horarios y disponibilidad:", error);
+    Alert.alert("Error", "No se pudo verificar la disponibilidad.");
   } finally {
     setLoading(false);
   }
@@ -196,15 +223,16 @@ export const BookingScreen = ({ navigation, route }: any) => {
   const handleConfirmBooking = async () => {
     setLoading(true);
     try {
+      let citaData: any;
       if (reprogramarId) {
         await citasService.reagendarCita(reprogramarId, {
           fecha: selectedFecha,
           hora_inicio: selectedHora!.inicio,
           hora_fin: selectedHora!.fin,
         });
-        Alert.alert('Éxito', 'Cita reprogramada');
+        Alert.alert('Éxito', 'Cita reprogramada correctamente');
       } else {
-        await citasService.createCita({
+        const response = await citasService.createCita({
           mascota: selectedPet!.id,
           servicio: selectedServicio!.id,
           peluquero_id: selectedPeluquero!.id,
@@ -213,7 +241,16 @@ export const BookingScreen = ({ navigation, route }: any) => {
           hora_fin: selectedHora!.fin,
           notas: notas || undefined,
         });
-        Alert.alert('Éxito', `Cita reservada para ${selectedPet!.nombre}`);
+
+        citaData = response;
+
+        const citaId = citaData?.id;
+
+            if (citaId) {
+              // Llamamos a tu servicio con el prefijo /api que pusimos arriba
+              await notificacionService.crearNotificacionCita(citaId);
+            }
+        Alert.alert('¡Cita Confirmada!', `Hemos enviado una notificación a ${selectedPeluquero?.nombre} y se ha agendado para ${selectedPet!.nombre}.`);
       }
       resetForm();
       navigation.navigate('Inicio');
@@ -227,6 +264,7 @@ export const BookingScreen = ({ navigation, route }: any) => {
  const availableDates = React.useMemo(() => {
   return [...Array(14)].map((_, i) => {
     const date = new Date();
+    date.setHours(0, 0, 0, 0); 
     date.setDate(date.getDate() + i);
     return {
       dateString: date.toISOString().split('T')[0],
@@ -338,7 +376,8 @@ export const BookingScreen = ({ navigation, route }: any) => {
             >
               {availableDates.map((item) => {
                 const isSelected = selectedFecha === item.dateString;
-                const dateObj = new Date(item.dateString + 'T12:00:00');
+                const [y, m, d] = item.dateString.split('-').map(Number);
+                const dateObj = new Date(y, m - 1, d);
                 let dayOfWeek = dateObj.getDay(); 
                 const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Ajuste a tu lógica de backend
                 
@@ -408,22 +447,26 @@ export const BookingScreen = ({ navigation, route }: any) => {
                       style={[
                         styles.timeSlot,
                         { 
-                          backgroundColor: isSelected ? COLORS.primary : dynamicColors.card, 
+                          backgroundColor: isSelected 
+                            ? COLORS.primary 
+                            : (isDisabled ? (isDarkMode ? '#2a2a2a' : '#f0f0f0') : dynamicColors.card), 
                           borderColor: isSelected ? COLORS.primary : dynamicColors.border 
                         },
-                        isDisabled && styles.timeSlotDisabled
-
-                        
+                        isDisabled && { opacity: 0.5, borderStyle: 'dashed' } // Estilo visual de bloqueado
                       ]}
                       onPress={() => setSelectedHora({ inicio: item.hora_inicio, fin: item.hora_fin })}
                     >
                       <Text style={[
                         styles.timeSlotText, 
-                        { color: isSelected ? '#fff' : dynamicColors.text },
-                        isDisabled && styles.textDisabled
+                        { color: isSelected ? '#fff' : (isDisabled ? '#888' : dynamicColors.text) },
+                        isDisabled && { textDecorationLine: 'line-through' }
                       ]}>
                         {item.hora_inicio.substring(0, 5)}
                       </Text>
+                      {/* Opcional: Un pequeño texto que diga "Ocupado" */}
+                      {isDisabled && (
+                        <Text style={{ fontSize: 8, color: 'red', fontWeight: 'bold' }}>OCUPADO</Text>
+                      )}
                     </TouchableOpacity>
                   );
                 })
